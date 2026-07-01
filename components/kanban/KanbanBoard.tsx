@@ -6,6 +6,7 @@ import type { User, ActivityLogEntry } from '@/lib/domain/types'
 import { groupByColumn, moveTask } from '@/lib/domain/kanban'
 import { applyTaskEdit, makeMoveLog } from '@/lib/domain/activity'
 import { computeSlaStatus } from '@/lib/domain/sla'
+import { moveTaskAction, editTaskAction } from '@/app/actions/tasks'
 import { TaskCard } from './TaskCard'
 import { TaskDetailDrawer } from './TaskDetailDrawer'
 
@@ -40,6 +41,7 @@ export function KanbanBoard({ project, users }: { project: EnrichedProject; user
     const moved = moveTask(tasks, taskId, toColumn).map((t) => (t.id === taskId ? recomputeSla({ ...t, columnStatus: toColumn }) : t))
     setTasks(moved)
     addLogs(taskId, [log])
+    void moveTaskAction(taskId, toColumn) // persist (no-op ถ้ายังไม่ต่อ Sheet)
   }
 
   function handleSave(taskId: string, changes: Partial<EnrichedTask>) {
@@ -49,6 +51,7 @@ export function KanbanBoard({ project, users }: { project: EnrichedProject; user
     const withDerived = recomputeSla({ ...edited, assignee: usersById.get(edited.assigneeId) })
     setTasks((prev) => prev.map((t) => (t.id === taskId ? withDerived : t)))
     addLogs(taskId, logs)
+    if (logs.length > 0) void editTaskAction(taskId, changes, task.updatedAt) // persist
   }
 
   return (

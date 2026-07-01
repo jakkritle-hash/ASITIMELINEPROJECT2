@@ -1,4 +1,7 @@
 import type { User, Team } from '@/lib/domain/types'
+import { getTab } from '@/lib/sheets/repository'
+import { parseUser, parseTeam } from '@/lib/sheets/schema'
+import { sheetsConfigured } from './dashboard'
 import { FIXTURE_USERS, FIXTURE_TEAMS } from './fixtures'
 
 export interface AdminData {
@@ -6,7 +9,14 @@ export interface AdminData {
   teams: Team[]
 }
 
-/** ดึงข้อมูลสำหรับหน้า Admin — ใช้ fixtures จนกว่าจะต่อ Google Sheet */
+/** ดึงข้อมูลสำหรับหน้า Admin — จาก Sheets ถ้าตั้งค่าแล้ว ไม่งั้น fixtures */
 export async function getAdminData(): Promise<AdminData> {
-  return { users: FIXTURE_USERS, teams: FIXTURE_TEAMS }
+  if (!sheetsConfigured()) {
+    return { users: FIXTURE_USERS, teams: FIXTURE_TEAMS }
+  }
+  const [users, teams] = await Promise.all([
+    getTab('Users').then((rows) => rows.map(parseUser)),
+    getTab('Teams').then((rows) => rows.map(parseTeam)),
+  ])
+  return { users, teams }
 }

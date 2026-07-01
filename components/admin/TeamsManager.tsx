@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { User, Team } from '@/lib/domain/types'
 import { createTeam, addTeamMember, removeTeamMember, setTeamLead } from '@/lib/domain/adminOps'
+import { createTeamAction, addTeamMemberAction, removeTeamMemberAction, setTeamLeadAction } from '@/app/actions/admin'
 import { Avatar } from '@/components/ui/Avatar'
 
 export function TeamsManager({ users, teams: initial }: { users: User[]; teams: Team[] }) {
@@ -15,6 +16,7 @@ export function TeamsManager({ users, teams: initial }: { users: User[]; teams: 
     if (!name) return
     setTeams((prev) => createTeam(prev, `t${Date.now()}`, name, new Date().toISOString()))
     setNewName('')
+    void createTeamAction(name)
   }
 
   return (
@@ -46,14 +48,14 @@ export function TeamsManager({ users, teams: initial }: { users: User[]; teams: 
                     <Avatar user={u} size={18} />
                     <span className="text-gray-700">{u?.name ?? id}</span>
                     <button
-                      onClick={() => setTeams((prev) => setTeamLead(prev, t.id, id))}
+                      onClick={() => { setTeams((prev) => setTeamLead(prev, t.id, id)); void setTeamLeadAction(t.id, id) }}
                       title="ตั้งเป็นหัวหน้าทีม"
                       className={isLead ? 'text-amber-500' : 'text-gray-300 hover:text-amber-400'}
                     >
                       ★
                     </button>
                     <button
-                      onClick={() => setTeams((prev) => removeTeamMember(prev, t.id, id))}
+                      onClick={() => { setTeams((prev) => removeTeamMember(prev, t.id, id)); void removeTeamMemberAction(t.id, id) }}
                       title="ลบออกจากทีม"
                       className="text-gray-300 hover:text-red-400"
                     >
@@ -66,7 +68,12 @@ export function TeamsManager({ users, teams: initial }: { users: User[]; teams: 
             {nonMembers.length > 0 && (
               <select
                 value=""
-                onChange={(e) => e.target.value && setTeams((prev) => addTeamMember(prev, t.id, e.target.value))}
+                onChange={(e) => {
+                  const uid = e.target.value
+                  if (!uid) return
+                  setTeams((prev) => addTeamMember(prev, t.id, uid))
+                  void addTeamMemberAction(t.id, uid)
+                }}
                 className="rounded-md border border-gray-200 px-2 py-1 text-xs outline-none focus:border-blue-300"
               >
                 <option value="">+ เพิ่มสมาชิก…</option>

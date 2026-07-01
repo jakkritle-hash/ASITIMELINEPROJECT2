@@ -1,6 +1,26 @@
 import type { User, Project, Task, SlaStatus } from '@/lib/domain/types'
 import { computeSlaStatus } from '@/lib/domain/sla'
+import { getTab } from '@/lib/sheets/repository'
+import { parseUser, parseProject, parseTask } from '@/lib/sheets/schema'
 import { FIXTURE_USERS, FIXTURE_PROJECTS, FIXTURE_TASKS } from './fixtures'
+
+/** true ถ้าตั้งค่า service account แล้ว (ใช้ Sheets จริง) */
+export function sheetsConfigured(): boolean {
+  return !!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL
+}
+
+/** โหลดข้อมูลดิบทั้งหมด — จาก Sheets ถ้าตั้งค่าแล้ว ไม่งั้น fixtures */
+export async function loadRaw(): Promise<{ users: User[]; projects: Project[]; tasks: Task[] }> {
+  if (!sheetsConfigured()) {
+    return { users: FIXTURE_USERS, projects: FIXTURE_PROJECTS, tasks: FIXTURE_TASKS }
+  }
+  const [users, projects, tasks] = await Promise.all([
+    getTab('Users').then((rows) => rows.map(parseUser)),
+    getTab('Projects').then((rows) => rows.map(parseProject)),
+    getTab('Tasks').then((rows) => rows.map(parseTask)),
+  ])
+  return { users, projects, tasks }
+}
 
 const TZ = 'Asia/Bangkok'
 const AT_RISK_DAYS = 2
@@ -46,12 +66,8 @@ function enrich(users: User[], projects: Project[], tasks: Task[], now: Date): E
   })
 }
 
-/** ดึงข้อมูล dashboard — ใช้ fixtures ถ้ายังไม่ได้ตั้งค่า service account */
+/** ดึงข้อมูล dashboard — จาก Sheets ถ้าตั้งค่าแล้ว ไม่งั้น fixtures */
 export async function getDashboardData(now: Date = new Date()): Promise<DashboardData> {
-  const hasSheets = !!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL
-  if (!hasSheets) {
-    return { projects: enrich(FIXTURE_USERS, FIXTURE_PROJECTS, FIXTURE_TASKS, now), usingFixtures: true }
-  }
-  // Path Sheets จริงจะต่อในเฟส 3 (อ่านจาก getTab + parse) — ตอนนี้ fallback fixtures
-  return { projects: enrich(FIXTURE_USERS, FIXTURE_PROJECTS, FIXTURE_TASKS, now), usingFixtures: true }
+  const { users, projects, tasks } = await loadRaw()
+  return { projects: enrich(users, projects, tasks, now), usingFixtures: !sheetsConfigured() }
 }
