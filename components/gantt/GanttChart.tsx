@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { differenceInCalendarDays } from 'date-fns'
 import type { EnrichedProject } from '@/lib/data/dashboard'
 import { barMetrics, timelineRange, type DateRange } from '@/lib/domain/ganttGeometry'
@@ -86,7 +87,9 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
                     >
                       {isOpen ? '−' : '+'}
                     </button>
-                    <span className="truncate text-sm font-semibold text-gray-800">{p.name}</span>
+                    <Link href={`/projects/${p.id}`} className="truncate text-sm font-semibold text-gray-800 hover:text-blue-600 hover:underline">
+                      {p.name}
+                    </Link>
                     <span className="ml-auto">
                       <AvatarGroup users={p.members} size={18} />
                     </span>
