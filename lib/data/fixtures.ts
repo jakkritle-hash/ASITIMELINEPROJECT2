@@ -1,4 +1,4 @@
-import type { User, Project, Task } from '@/lib/domain/types'
+import type { User, Team, Project, Task } from '@/lib/domain/types'
 
 export const FIXTURE_USERS: User[] = [
   { id: 'u1', email: 'somchai@planbmedia.co.th', name: 'สมชาย', role: 'Manager', avatarColor: '#4f7cff', active: true, createdAt: '2026-01-01' },
@@ -6,6 +6,11 @@ export const FIXTURE_USERS: User[] = [
   { id: 'u3', email: 'piti@planbmedia.co.th', name: 'ปิติ', role: 'Member', avatarColor: '#ef5da8', active: true, createdAt: '2026-01-01' },
   { id: 'u4', email: 'anong@planbmedia.co.th', name: 'อนงค์', role: 'Member', avatarColor: '#8a63d2', active: true, createdAt: '2026-01-01' },
   { id: 'u5', email: 'wina@planbmedia.co.th', name: 'วีณา', role: 'Member', avatarColor: '#f5a623', active: true, createdAt: '2026-01-01' },
+]
+
+export const FIXTURE_TEAMS: Team[] = [
+  { id: 't1', name: 'Marketing', memberIds: ['u1', 'u2', 'u5'], leadUserId: 'u1', createdAt: '2026-01-05' },
+  { id: 't2', name: 'Dev', memberIds: ['u3', 'u4'], leadUserId: 'u3', createdAt: '2026-01-05' },
 ]
 
 export const FIXTURE_PROJECTS: Project[] = [
