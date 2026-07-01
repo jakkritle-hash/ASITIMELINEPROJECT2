@@ -52,20 +52,20 @@ function buildSegments(
 export function yearSegments(range: DateRange): HeaderSegment[] {
   const s = new Date(range.start)
   const e = new Date(range.end)
-  return buildSegments(eachYearOfInterval({ start: s, end: e }).map(startOfYear), (d) => addYears(d, 1), (d) => `${d.getFullYear()}`, range)
+  return buildSegments(eachYearOfInterval({ start: s, end: e }).map((d) => startOfYear(d)), (d) => addYears(d, 1), (d) => `${d.getFullYear()}`, range)
 }
 
 export function quarterSegments(range: DateRange): HeaderSegment[] {
   const s = new Date(range.start)
   const e = new Date(range.end)
-  return buildSegments(eachQuarterOfInterval({ start: s, end: e }).map(startOfQuarter), (d) => addQuarters(d, 1), (d) => `Q${getQuarter(d)}`, range)
+  return buildSegments(eachQuarterOfInterval({ start: s, end: e }).map((d) => startOfQuarter(d)), (d) => addQuarters(d, 1), (d) => `Q${getQuarter(d)}`, range)
 }
 
 export function monthSegments(range: DateRange): HeaderSegment[] {
   const s = new Date(range.start)
   const e = new Date(range.end)
   return buildSegments(
-    eachMonthOfInterval({ start: s, end: e }).map(startOfMonth),
+    eachMonthOfInterval({ start: s, end: e }).map((d) => startOfMonth(d)),
     (d) => addMonths(d, 1),
     (d) => `${TH_MONTHS[d.getMonth()]} ${d.getFullYear()}`,
     range,
