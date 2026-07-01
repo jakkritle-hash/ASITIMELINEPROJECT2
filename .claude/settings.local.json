@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(\"C:/Users/jakkrit.le/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/brainstorming/scripts/start-server.sh\" --project-dir \"C:/Users/jakkrit.le/Desktop/Coworkweb\")",
+      "Bash(xargs cat)"
+    ]
+  }
+}
