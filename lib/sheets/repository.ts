@@ -20,7 +20,7 @@ export function objectToRow(obj: Record<string, unknown>, header: string[]): str
   })
 }
 
-/** อ่านทั้ง tab (รวม header) แล้วแปลงเป็น array ของ object */
+/** อ่านทั้ง tab แบบสด (ไม่ cache) — ใช้ในการเขียน/หาแถว เพื่อความถูกต้อง */
 export async function getTab(tab: string): Promise<Record<string, string>[]> {
   const sheets = getSheetsClient()
   const res = await sheets.spreadsheets.values.get({
@@ -28,6 +28,40 @@ export async function getTab(tab: string): Promise<Record<string, string>[]> {
     range: tab,
   })
   return rowsToObjects((res.data.values as string[][]) ?? [])
+}
+
+// ---- Cache แบบ TTL ระดับ module (กัน rate limit ของ Sheets API) ----
+const CACHE_TTL_MS = 15_000
+type CacheEntry = { data: Record<string, string>[]; expires: number }
+const _cache = new Map<string, CacheEntry>()
+// dedupe การอ่านที่ค้างอยู่พร้อมกัน ให้ยิง API ครั้งเดียว
+const _inflight = new Map<string, Promise<Record<string, string>[]>>()
+
+/**
+ * อ่านทั้ง tab แบบมี cache (TTL 15 วิ) — ใช้สำหรับ render หน้าเพจ
+ * ลดจำนวน read ต่อ rate limit; ล้างทันทีด้วย invalidateSheetCache() หลังเขียน
+ */
+export async function getTabCached(tab: string): Promise<Record<string, string>[]> {
+  const now = Date.now()
+  const hit = _cache.get(tab)
+  if (hit && hit.expires > now) return hit.data
+
+  const pending = _inflight.get(tab)
+  if (pending) return pending
+
+  const p = getTab(tab)
+    .then((data) => {
+      _cache.set(tab, { data, expires: Date.now() + CACHE_TTL_MS })
+      return data
+    })
+    .finally(() => _inflight.delete(tab))
+  _inflight.set(tab, p)
+  return p
+}
+
+/** ล้าง cache ทั้งหมด (เรียกหลังการเขียนเพื่อให้เห็นผลทันที) */
+export function invalidateSheetCache(): void {
+  _cache.clear()
 }
 
 /** append หนึ่งแถวต่อท้าย tab ตามลำดับ header */

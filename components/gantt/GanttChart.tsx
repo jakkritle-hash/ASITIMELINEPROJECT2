@@ -58,15 +58,18 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
             <div key={layer} className="flex border-b border-gray-100">
               <div className="shrink-0 bg-white" style={{ width: LABEL_W }} />
               <div className="relative" style={{ width: timelineW, height: 22 }}>
-                {segmentsForLayer(layer, range).map((seg, i) => (
-                  <div
-                    key={i}
-                    className="absolute flex items-center justify-center border-r border-gray-100 text-[10px] text-gray-500"
-                    style={{ left: `${seg.leftPct}%`, width: `${seg.widthPct}%`, height: '100%' }}
-                  >
-                    {seg.widthPct > 3 ? seg.label : ''}
-                  </div>
-                ))}
+                {segmentsForLayer(layer, range).map((seg, i) => {
+                  const pxWidth = (seg.widthPct / 100) * timelineW
+                  return (
+                    <div
+                      key={i}
+                      className="absolute flex items-center justify-center overflow-hidden border-r border-gray-100 text-[10px] whitespace-nowrap text-gray-500"
+                      style={{ left: `${seg.leftPct}%`, width: `${seg.widthPct}%`, height: '100%' }}
+                    >
+                      {pxWidth > 16 ? seg.label : ''}
+                    </div>
+                  )
+                })}
               </div>
             </div>
           ))}

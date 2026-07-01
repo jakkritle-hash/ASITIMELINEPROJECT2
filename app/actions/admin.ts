@@ -1,8 +1,8 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import type { Role } from '@/lib/domain/types'
-import { getTab, updateRowById, appendRow } from '@/lib/sheets/repository'
+import { getTab, updateRowById, appendRow, invalidateSheetCache } from '@/lib/sheets/repository'
 import { parseUser, parseTeam, serializeUser, serializeTeam, TAB_HEADERS } from '@/lib/sheets/schema'
 import { updateUserRole, toggleUserActive, addTeamMember, removeTeamMember, setTeamLead } from '@/lib/domain/adminOps'
 import { canManageMembers } from '@/lib/domain/permissions'
@@ -33,6 +33,7 @@ export async function setRoleAction(userId: string, role: Role): Promise<ActionR
   if (!updated) return { ok: false, error: 'not found' }
   await updateRowById('Users', userId, serializeUser(updated), U_HEADER)
   revalidatePath('/admin/members')
+  invalidateSheetCache()
   return { ok: true }
 }
 
@@ -45,6 +46,7 @@ export async function toggleActiveAction(userId: string): Promise<ActionResult> 
   if (!updated) return { ok: false, error: 'not found' }
   await updateRowById('Users', userId, serializeUser(updated), U_HEADER)
   revalidatePath('/admin/members')
+  invalidateSheetCache()
   return { ok: true }
 }
 
@@ -56,6 +58,7 @@ export async function createTeamAction(name: string): Promise<ActionResult> {
   const id = `t${existing.length + 1}-${Date.now()}`
   await appendRow('Teams', serializeTeam({ id, name, memberIds: [], leadUserId: '', createdAt: new Date().toISOString() }), T_HEADER)
   revalidatePath('/admin/teams')
+  invalidateSheetCache()
   return { ok: true }
 }
 
@@ -65,6 +68,7 @@ async function writeTeam(teamId: string, transform: (teams: ReturnType<typeof pa
   if (!updated) return { ok: false, error: 'not found' }
   await updateRowById('Teams', teamId, serializeTeam(updated), T_HEADER)
   revalidatePath('/admin/teams')
+  invalidateSheetCache()
   return { ok: true }
 }
 

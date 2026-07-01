@@ -1,6 +1,8 @@
 import { getAdminData } from '@/lib/data/admin'
 import { TeamsManager } from '@/components/admin/TeamsManager'
 
+export const dynamic = 'force-dynamic'
+
 export default async function TeamsPage() {
   const { users, teams } = await getAdminData()
   return (

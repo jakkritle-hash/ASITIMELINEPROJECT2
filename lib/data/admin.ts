@@ -1,5 +1,5 @@
 import type { User, Team } from '@/lib/domain/types'
-import { getTab } from '@/lib/sheets/repository'
+import { getTabCached } from '@/lib/sheets/repository'
 import { parseUser, parseTeam } from '@/lib/sheets/schema'
 import { sheetsConfigured } from './dashboard'
 import { FIXTURE_USERS, FIXTURE_TEAMS } from './fixtures'
@@ -15,8 +15,8 @@ export async function getAdminData(): Promise<AdminData> {
     return { users: FIXTURE_USERS, teams: FIXTURE_TEAMS }
   }
   const [users, teams] = await Promise.all([
-    getTab('Users').then((rows) => rows.map(parseUser)),
-    getTab('Teams').then((rows) => rows.map(parseTeam)),
+    getTabCached('Users').then((rows) => rows.map(parseUser)),
+    getTabCached('Teams').then((rows) => rows.map(parseTeam)),
   ])
   return { users, teams }
 }

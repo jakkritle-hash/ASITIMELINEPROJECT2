@@ -1,6 +1,6 @@
 import type { User, Project, Task, SlaStatus } from '@/lib/domain/types'
 import { computeSlaStatus } from '@/lib/domain/sla'
-import { getTab } from '@/lib/sheets/repository'
+import { getTabCached } from '@/lib/sheets/repository'
 import { parseUser, parseProject, parseTask } from '@/lib/sheets/schema'
 import { FIXTURE_USERS, FIXTURE_PROJECTS, FIXTURE_TASKS } from './fixtures'
 
@@ -15,9 +15,9 @@ export async function loadRaw(): Promise<{ users: User[]; projects: Project[]; t
     return { users: FIXTURE_USERS, projects: FIXTURE_PROJECTS, tasks: FIXTURE_TASKS }
   }
   const [users, projects, tasks] = await Promise.all([
-    getTab('Users').then((rows) => rows.map(parseUser)),
-    getTab('Projects').then((rows) => rows.map(parseProject)),
-    getTab('Tasks').then((rows) => rows.map(parseTask)),
+    getTabCached('Users').then((rows) => rows.map(parseUser)),
+    getTabCached('Projects').then((rows) => rows.map(parseProject)),
+    getTabCached('Tasks').then((rows) => rows.map(parseTask)),
   ])
   return { users, projects, tasks }
 }

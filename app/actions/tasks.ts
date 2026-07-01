@@ -2,11 +2,11 @@
 
 import { revalidatePath } from 'next/cache'
 import type { Task, Project, Team } from '@/lib/domain/types'
-import { getTab, updateRowById, appendRows } from '@/lib/sheets/repository'
+import { getTab, updateRowById, appendRows, invalidateSheetCache } from '@/lib/sheets/repository'
 import { parseTask, parseProject, parseTeam, serializeTask, serializeLog, TAB_HEADERS } from '@/lib/sheets/schema'
 import { applyTaskEdit, makeMoveLog } from '@/lib/domain/activity'
 import { computeSlaStatus } from '@/lib/domain/sla'
-import { canEditTask } from '@/lib/domain/permissions'
+import { canEditTask, canEditProject } from '@/lib/domain/permissions'
 import { getCurrentUser } from '@/lib/auth/session'
 import { sheetsConfigured } from '@/lib/data/dashboard'
 
@@ -43,6 +43,62 @@ function recomputeSla(task: Task): Task {
   return { ...task, slaStatus: computeSlaStatus({ dueDate: task.dueDate, isDone, now: new Date(), tz: TZ, atRiskDays: AT_RISK_DAYS }) }
 }
 
+export interface NewTaskInput {
+  title: string
+  assigneeId: string
+  startDate: string
+  dueDate: string
+  description?: string
+}
+
+/** สร้าง task ใหม่ในโปรเจกต์ — ต้องมีสิทธิ์แก้โปรเจกต์นั้น */
+export async function createTaskAction(projectId: string, input: NewTaskInput): Promise<{ ok: boolean; error?: string }> {
+  if (!sheetsConfigured()) return { ok: true }
+  const user = await getCurrentUser()
+  if (!user) return { ok: false, error: 'unauthenticated' }
+  if (!input.title.trim()) return { ok: false, error: 'ต้องมีชื่องาน' }
+
+  const [tasks, projects, teams] = await Promise.all([
+    getTab('Tasks').then((r) => r.map(parseTask)),
+    getTab('Projects').then((r) => r.map(parseProject)),
+    getTab('Teams').then((r) => r.map(parseTeam)),
+  ])
+  const project = projects.find((p) => p.id === projectId)
+  if (!project) return { ok: false, error: 'not found' }
+  const leadTeamIds = teams.filter((t) => t.leadUserId === user.id).map((t) => t.id)
+  if (!canEditProject(user, project, leadTeamIds)) return { ok: false, error: 'forbidden' }
+
+  const now = new Date().toISOString()
+  const projectTasks = tasks.filter((t) => t.projectId === projectId)
+  const maxOrder = projectTasks.reduce((m, t) => Math.max(m, t.order), -1)
+  const firstColumn = project.kanbanColumns[0] || 'To Do'
+
+  const task: Task = {
+    id: `k${tasks.length + 1}-${Date.now()}`,
+    projectId,
+    title: input.title.trim(),
+    assigneeId: input.assigneeId,
+    columnStatus: firstColumn,
+    startDate: input.startDate,
+    dueDate: input.dueDate,
+    slaStatus: computeSlaStatus({ dueDate: input.dueDate, isDone: false, now: new Date(), tz: TZ, atRiskDays: AT_RISK_DAYS }),
+    editCount: 0,
+    description: input.description || '',
+    order: maxOrder + 1,
+    createdAt: now,
+    updatedAt: now,
+  }
+  await appendRows('Tasks', [serializeTask(task)], HEADER)
+  await appendRows('ActivityLog', [serializeLog({
+    id: `${task.id}-${now}-create`, timestamp: now, actorId: user.id,
+    entityType: 'task', entityId: task.id, action: 'create', field: 'title', oldValue: '', newValue: task.title,
+  })], LOG_HEADER)
+  revalidatePath(`/projects/${projectId}`)
+  revalidatePath('/')
+  invalidateSheetCache()
+  return { ok: true }
+}
+
 /** แก้ไขรายละเอียด task — ตรวจสิทธิ์ + optimistic lock (updatedAt) + editCount + log */
 export async function editTaskAction(taskId: string, changes: Partial<Task>, expectedUpdatedAt?: string): Promise<ActionResult> {
   if (!sheetsConfigured()) return { ok: true } // dev: client เก็บ state เอง
@@ -65,6 +121,7 @@ export async function editTaskAction(taskId: string, changes: Partial<Task>, exp
   await appendRows('ActivityLog', logs.map(serializeLog), LOG_HEADER)
   revalidatePath(`/projects/${ctx.project.id}`)
   revalidatePath('/')
+  invalidateSheetCache()
   return { ok: true }
 }
 
@@ -87,5 +144,6 @@ export async function moveTaskAction(taskId: string, toColumn: string): Promise<
   await appendRows('ActivityLog', [serializeLog(log)], LOG_HEADER)
   revalidatePath(`/projects/${ctx.project.id}`)
   revalidatePath('/')
+  invalidateSheetCache()
   return { ok: true }
 }
