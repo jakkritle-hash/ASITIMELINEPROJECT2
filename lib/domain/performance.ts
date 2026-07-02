@@ -13,10 +13,25 @@ export interface PerfProject {
   ownerUserId: string
   departments: string[]
 }
+/** คะแนนของ "หนึ่งโปรเจกต์" ที่คนนี้รับ — บวกกันจึงเป็นคะแนนรวมของบุคคล */
+export interface ProjectScore {
+  projectId: string
+  deptCount: number
+  taskTotal: number
+  taskDone: number
+  overdue: number
+  workingDays: number
+  /** อัตราส่งตรงเวลาในโปรเจกต์นี้ (งานปิดจบ / งานที่รับในโปรเจกต์) 0–100 */
+  onTimeRate: number
+  score: number
+}
+
 export interface MemberStats {
   user: User
   projectCount: number
   projectIds: string[]
+  /** คะแนนแยกรายโปรเจกต์ (score รวม = ผลบวกของ projectScores[].score) */
+  projectScores: ProjectScore[]
   taskTotal: number
   taskDone: number
   workingDays: number
@@ -31,32 +46,31 @@ export interface MemberStats {
 
 /** น้ำหนักคะแนน — ปรับได้ที่นี่ที่เดียว (Department = สูงสุดตามที่ผู้ใช้กำหนด) */
 export const WEIGHTS = {
-  departmentLoad: 15, // ← น้ำหนักสูงสุด: ทำงานข้ามหลายแผนก = ผลกระทบกว้าง
-  taskDone: 10, // งานที่ปิดจบจริง
-  completion: 0.5, // อัตราส่งสำเร็จ % (ความน่าเชื่อถือ)
-  workingDays: 1, // วันทำการที่ลงแรง
+  departmentLoad: 15, // ← น้ำหนักสูงสุด: จำนวน Department ที่โปรเจกต์นี้ใช้
+  taskDone: 10, // งานที่ปิดจบจริง (ส่งตรงเวลา)
+  onTimeRate: 0.5, // อัตราตรงเวลาในโปรเจกต์นี้ (ความน่าเชื่อถือ)
+  workingDays: 1, // วันทำการที่ลงแรงในโปรเจกต์นี้
   overdue: -8, // penalty งานเลยกำหนด
 } as const
 
 /**
- * คะแนนจัดอันดับผลงาน — นิยาม "แชมป์" ของทีม
+ * คะแนนของ "หนึ่งโปรเจกต์" ที่บุคคลรับ:
+ *   projectScore = deptCount×15 + taskDone×10 + onTimeRate×0.5 + workingDays×1 − overdue×8
  *
- * score = departmentLoad×15 + taskDone×10 + completion×0.5 + workingDays×1 − overdue×8
- *
- * ตรรกะ: การทำงานข้ามหลายแผนก (department load) มีน้ำหนักสูงสุด รองมาคือปิดงานได้จริง
- * + ตรงเวลา — "รับงานเยอะ" ดิบๆ ไม่ใช่แชมป์
+ * คะแนนรวมของบุคคล = ผลบวกของ projectScore ทุกโปรเจกต์ที่เขาเกี่ยวข้อง
+ * (คิดแยกทีละโปรเจกต์แล้วเอามารวมกัน)
  */
-export function rankScore(s: Pick<MemberStats, 'departmentLoad' | 'taskDone' | 'completion' | 'workingDays' | 'byStatus'>): number {
+export function projectScore(p: Pick<ProjectScore, 'deptCount' | 'taskDone' | 'onTimeRate' | 'workingDays' | 'overdue'>): number {
   return Math.round(
-    s.departmentLoad * WEIGHTS.departmentLoad +
-      s.taskDone * WEIGHTS.taskDone +
-      s.completion * WEIGHTS.completion +
-      s.workingDays * WEIGHTS.workingDays +
-      s.byStatus.overdue * WEIGHTS.overdue,
+    p.deptCount * WEIGHTS.departmentLoad +
+      p.taskDone * WEIGHTS.taskDone +
+      p.onTimeRate * WEIGHTS.onTimeRate +
+      p.workingDays * WEIGHTS.workingDays +
+      p.overdue * WEIGHTS.overdue,
   )
 }
 
-/** สรุปผลงานรายบุคคลจากงานที่รับ (assignee) + โปรเจกต์ที่เกี่ยวข้อง */
+/** สรุปผลงานรายบุคคล — คิดคะแนนแยกทีละโปรเจกต์แล้วรวมกัน */
 export function computePerformance(users: User[], tasks: PerfTask[], projects: PerfProject[]): MemberStats[] {
   const deptCountById = new Map(projects.map((p) => [p.id, p.departments.length]))
   const stats = users
@@ -67,6 +81,20 @@ export function computePerformance(users: User[], tasks: PerfTask[], projects: P
       projects.forEach((p) => {
         if (p.ownerUserId === u.id || p.memberIds.includes(u.id)) projIds.add(p.id)
       })
+
+      // ── คิดคะแนนแยกทีละโปรเจกต์ ──
+      const projectScores: ProjectScore[] = [...projIds].map((pid) => {
+        const inProj = mine.filter((t) => t.projectId === pid)
+        const deptCount = deptCountById.get(pid) ?? 0
+        const taskDone = inProj.filter((t) => t.columnStatus.toLowerCase() === 'done').length
+        const overdue = inProj.filter((t) => t.slaStatus === 'overdue').length
+        const workingDays = inProj.reduce((s, t) => s + t.workingDays, 0)
+        const onTimeRate = inProj.length ? Math.round((taskDone / inProj.length) * 100) : 0
+        return { projectId: pid, deptCount, taskTotal: inProj.length, taskDone, overdue, workingDays, onTimeRate, score: projectScore({ deptCount, taskDone, onTimeRate, workingDays, overdue }) }
+      })
+      // เรียงโปรเจกต์คะแนนมาก→น้อยเพื่อโชว์
+      projectScores.sort((a, b) => b.score - a.score)
+
       const byStatus: Record<SlaStatus, number> = { 'on-track': 0, 'at-risk': 0, overdue: 0, done: 0 }
       mine.forEach((t) => {
         byStatus[t.slaStatus] = (byStatus[t.slaStatus] ?? 0) + 1
@@ -74,20 +102,22 @@ export function computePerformance(users: User[], tasks: PerfTask[], projects: P
       const taskDone = mine.filter((t) => t.columnStatus.toLowerCase() === 'done').length
       const workingDays = mine.reduce((s, t) => s + t.workingDays, 0)
       const completion = mine.length ? Math.round((taskDone / mine.length) * 100) : 0
-      // จำนวน Department ที่ใช้ของแต่ละโปรเจกต์ที่เกี่ยวข้อง แล้วรวมกัน
-      const departmentLoad = [...projIds].reduce((s, id) => s + (deptCountById.get(id) ?? 0), 0)
-      const base = { departmentLoad, taskDone, completion, workingDays, byStatus }
+      const departmentLoad = projectScores.reduce((s, ps) => s + ps.deptCount, 0)
+      // ── คะแนนรวม = ผลบวกของคะแนนรายโปรเจกต์ ──
+      const score = projectScores.reduce((s, ps) => s + ps.score, 0)
+
       return {
         user: u,
         projectCount: projIds.size,
         projectIds: [...projIds],
+        projectScores,
         taskTotal: mine.length,
         taskDone,
         workingDays,
         completion,
         byStatus,
         departmentLoad,
-        score: rankScore(base),
+        score,
         rank: 0, // กำหนดหลังเรียง
       }
     })

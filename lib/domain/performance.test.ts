@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computePerformance, rankScore, type PerfTask, type PerfProject } from './performance'
+import { computePerformance, projectScore, type PerfTask, type PerfProject } from './performance'
 import type { User } from './types'
 
 const u = (id: string): User => ({ id, email: `${id}@x`, name: id, role: 'Member', avatarColor: '#000', active: true, createdAt: '' })
@@ -37,18 +37,26 @@ describe('computePerformance', () => {
     expect(s1.departmentLoad).toBe(3)
     expect(s2.departmentLoad).toBe(5)
   })
-  it('rankScore: department load เป็นน้ำหนักสูงสุด + หัก overdue', () => {
-    // u1: dept3×15 + done1×10 + 33×0.5 + 10 − overdue1×8 = 74
-    expect(s1.score).toBe(74)
-    // u2: dept5×15 + done1×10 + 100×0.5 + 4 = 139
-    expect(s2.score).toBe(139)
-    // pure fn: overdue ทำให้คะแนนต่ำกว่า
-    const clean = rankScore({ departmentLoad: 2, taskDone: 2, completion: 100, workingDays: 5, byStatus: { 'on-track': 0, 'at-risk': 0, overdue: 0, done: 2 } })
-    const late = rankScore({ departmentLoad: 2, taskDone: 2, completion: 100, workingDays: 5, byStatus: { 'on-track': 0, 'at-risk': 0, overdue: 2, done: 2 } })
+  it('คิดคะแนนแยกทีละโปรเจกต์แล้วรวมกัน (score รวม = Σ projectScores)', () => {
+    // u1/p1: dept2×15 + done1×10 + onTime50×0.5 + wd8 − overdue0×8 = 30+10+25+8 = 73
+    // u1/p2: dept1×15 + done0 + onTime0 + wd2 − overdue1×8 = 15+2−8 = 9
+    const p1 = s1.projectScores.find((p) => p.projectId === 'p1')!
+    const p2 = s1.projectScores.find((p) => p.projectId === 'p2')!
+    expect(p1.score).toBe(73)
+    expect(p2.score).toBe(9)
+    expect(s1.score).toBe(73 + 9) // 82 = ผลบวก
+    // u2/p1: dept2×15 + done1×10 + onTime100×0.5 + wd4 = 94 ; u2/p3(ไม่มี task): dept3×15 = 45
+    expect(s2.score).toBe(94 + 45) // 139
+    expect(s2.score).toBe(s2.projectScores.reduce((a, b) => a + b.score, 0))
+  })
+  it('projectScore: department เป็นน้ำหนักสูงสุด + หัก overdue', () => {
+    // overdue ทำให้คะแนนโปรเจกต์ต่ำกว่า
+    const clean = projectScore({ deptCount: 2, taskDone: 2, onTimeRate: 100, workingDays: 5, overdue: 0 })
+    const late = projectScore({ deptCount: 2, taskDone: 2, onTimeRate: 100, workingDays: 5, overdue: 2 })
     expect(clean).toBeGreaterThan(late)
-    // department load ถ่วงหนักกว่าจำนวนงานที่ปิด: +1 dept (×15) > +1 done (×10)
-    const moreDept = rankScore({ departmentLoad: 3, taskDone: 2, completion: 100, workingDays: 5, byStatus: { 'on-track': 0, 'at-risk': 0, overdue: 0, done: 2 } })
-    const moreDone = rankScore({ departmentLoad: 2, taskDone: 3, completion: 100, workingDays: 5, byStatus: { 'on-track': 0, 'at-risk': 0, overdue: 0, done: 3 } })
+    // +1 dept (×15) ถ่วงหนักกว่า +1 งานที่ปิด (×10)
+    const moreDept = projectScore({ deptCount: 3, taskDone: 2, onTimeRate: 100, workingDays: 5, overdue: 0 })
+    const moreDone = projectScore({ deptCount: 2, taskDone: 3, onTimeRate: 100, workingDays: 5, overdue: 0 })
     expect(moreDept).toBeGreaterThan(moreDone)
   })
   it('competition ranking: คะแนนเท่ากันได้อันดับเท่ากัน', () => {

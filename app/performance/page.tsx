@@ -19,9 +19,11 @@ export default async function PerformancePage() {
       <header className="mb-5">
         <h1 className="text-lg font-semibold text-gray-900 sm:text-xl">Individual Performance</h1>
         <p className="text-xs text-gray-500">
-          จัดอันดับผลงานรายบุคคล 🏆 — คะแนน = <span className="font-semibold text-indigo-600">Dept load ×15</span> + งานส่งสำเร็จ ×10 + อัตราสำเร็จ% ×0.5 + วันทำการ − งานเลยกำหนด ×8
+          จัดอันดับผลงานรายบุคคล 🏆 — คิดคะแนน<span className="font-semibold text-indigo-600">แยกทีละโปรเจกต์แล้วรวมกัน</span>
         </p>
-        <p className="text-[11px] text-gray-400">Dept load = ผลรวมจำนวน Department ของทุกโปรเจกต์ที่รับ (ทำงานข้ามแผนกมาก = คะแนนสูง)</p>
+        <p className="text-[11px] text-gray-400">
+          คะแนนต่อโปรเจกต์ = <span className="font-medium text-indigo-500">Department ×15</span> + งานส่งตรงเวลา ×10 + อัตราตรงเวลา% ×0.5 + วันทำการ − งานเลยกำหนด ×8
+        </p>
       </header>
 
       {stats.length === 0 ? (
@@ -101,13 +103,25 @@ export default async function PerformancePage() {
                 )}
               </div>
 
-              {/* Project chips */}
-              {s.projectIds.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {s.projectIds.map((pid) => (
-                    <span key={pid} className="truncate rounded-full bg-gray-50 px-2 py-0.5 text-[10px] text-gray-500 ring-1 ring-gray-100">
-                      {projectNames[pid] ?? pid}
-                    </span>
+              {/* Per-project score breakdown (คิดแยกทีละโปรเจกต์) */}
+              {s.projectScores.length > 0 && (
+                <div className="space-y-1 border-t border-gray-100 pt-2.5">
+                  <div className="mb-1 text-[10px] font-medium text-gray-400">คะแนนแยกรายโปรเจกต์</div>
+                  {s.projectScores.map((ps) => (
+                    <div key={ps.projectId} className="flex items-center gap-2 text-[11px]">
+                      <span className="truncate text-gray-600" title={projectNames[ps.projectId] ?? ps.projectId}>
+                        {projectNames[ps.projectId] ?? ps.projectId}
+                      </span>
+                      <span className="rounded bg-indigo-50 px-1 py-0.5 text-[9px] font-medium text-indigo-500" title="จำนวน Department">
+                        {ps.deptCount} dept
+                      </span>
+                      {ps.overdue > 0 && (
+                        <span className="rounded bg-red-50 px-1 py-0.5 text-[9px] font-medium text-red-500">
+                          เลย {ps.overdue}
+                        </span>
+                      )}
+                      <span className="ml-auto shrink-0 font-semibold text-gray-700">{ps.score}</span>
+                    </div>
                   ))}
                 </div>
               )}
