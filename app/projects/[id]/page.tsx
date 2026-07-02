@@ -38,7 +38,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         </div>
       </header>
 
-      <KanbanBoard project={project} users={users} />
+      {/* key = ชุด id ของ task: remount เมื่อมีการเพิ่ม/ลบงาน (จาก server revalidate)
+          แต่การ move/edit (id เดิม) ไม่ remount จึงคง optimistic state ไว้ */}
+      <KanbanBoard key={project.tasks.map((t) => t.id).join(',')} project={project} users={users} />
     </main>
   )
 }

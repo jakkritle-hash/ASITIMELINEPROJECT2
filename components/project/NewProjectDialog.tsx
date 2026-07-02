@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
 import type { Team } from '@/lib/domain/types'
 import { createProjectAction } from '@/app/actions/projects'
 
@@ -10,7 +9,6 @@ function todayIso() {
 }
 
 export function NewProjectDialog({ teams }: { teams: Team[] }) {
-  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState('')
@@ -36,7 +34,8 @@ export function NewProjectDialog({ teams }: { teams: Team[] }) {
       setName('')
       setDueDate('')
       setDescription('')
-      router.refresh()
+      // revalidatePath ใน server action อัปเดตหน้าให้อยู่แล้ว — ไม่ต้อง router.refresh()
+      // (การเรียก refresh ซ้อนใน transition ทำให้ RSC stream ถูก abort → "Connection closed")
     })
   }
 

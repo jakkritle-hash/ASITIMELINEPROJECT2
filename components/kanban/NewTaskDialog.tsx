@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
 import type { User } from '@/lib/domain/types'
 import { createTaskAction } from '@/app/actions/tasks'
 
@@ -10,7 +9,6 @@ function todayIso() {
 }
 
 export function NewTaskDialog({ projectId, users }: { projectId: string; users: User[] }) {
-  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState('')
@@ -34,7 +32,7 @@ export function NewTaskDialog({ projectId, users }: { projectId: string; users: 
       setOpen(false)
       setTitle('')
       setDueDate('')
-      router.refresh()
+      // revalidatePath ใน server action อัปเดตหน้าให้อยู่แล้ว — ไม่ต้อง router.refresh()
     })
   }
 
