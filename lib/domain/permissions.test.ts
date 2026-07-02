@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { canEditProject, canManageMembers, canEditTask } from './permissions'
+import { canEditProject, canManageMembers, canEditTask, canAccessPage, accessiblePageKeys } from './permissions'
 import type { User, Project, Task } from './types'
 
-const admin: User = { id: 'u1', email: 'a@x.co', name: 'A', role: 'Admin', avatarColor: '#000', active: true, createdAt: '' }
+const admin: User = { id: 'u1', email: 'a@x.co', name: 'A', role: 'Admin', avatarColor: '#000', active: true, createdAt: '', pageDenied: [] }
 const manager: User = { ...admin, id: 'u2', role: 'Manager' }
 const member: User = { ...admin, id: 'u3', role: 'Member' }
 
@@ -45,5 +45,28 @@ describe('permissions', () => {
   it('Member แก้ task ที่ไม่ใช่ของตนและไม่ใช่โปรเจกต์ตนไม่ได้', () => {
     const outsider: User = { ...member, id: 'u9' }
     expect(canEditTask(outsider, task, project)).toBe(false)
+  })
+})
+
+describe('canAccessPage', () => {
+  it('Admin เข้าได้ทุกหน้า (รวมหน้า admin)', () => {
+    for (const k of ['dashboard', 'performance', 'members', 'teams', 'control']) {
+      expect(canAccessPage(admin, k)).toBe(true)
+    }
+  })
+  it('Member เข้าหน้าเนื้อหาได้ตั้งต้น แต่หน้า admin ไม่ได้', () => {
+    expect(canAccessPage(member, 'dashboard')).toBe(true)
+    expect(canAccessPage(member, 'performance')).toBe(true)
+    expect(canAccessPage(member, 'members')).toBe(false)
+    expect(canAccessPage(member, 'control')).toBe(false)
+  })
+  it('Member ที่ถูกปิดสิทธิ์ performance เข้า performance ไม่ได้ แต่ dashboard ได้', () => {
+    const restricted: User = { ...member, pageDenied: ['performance'] }
+    expect(canAccessPage(restricted, 'performance')).toBe(false)
+    expect(canAccessPage(restricted, 'dashboard')).toBe(true)
+  })
+  it('accessiblePageKeys: Member = หน้าเนื้อหา, Admin = ทุกหน้า', () => {
+    expect(accessiblePageKeys(member)).toEqual(['dashboard', 'performance'])
+    expect(accessiblePageKeys(admin)).toEqual(['dashboard', 'performance', 'members', 'teams', 'control'])
   })
 })

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getProjectData } from '@/lib/data/project'
+import { getAppConfig } from '@/lib/data/config'
 import { KanbanBoard } from '@/components/kanban/KanbanBoard'
 import { NewTaskDialog } from '@/components/kanban/NewTaskDialog'
 import { ProjectActions } from '@/components/project/ProjectActions'
@@ -12,7 +13,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const data = await getProjectData(id)
+  const [data, config] = await Promise.all([getProjectData(id), getAppConfig()])
   if (!data) notFound()
   const { project, users, logs } = data
   const meta = STATUS_META[project.status]
@@ -42,7 +43,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
             <span className="text-xs text-gray-500">{project.progress}% · {project.startDate} → {project.dueDate} · {project.tasks.length} งาน</span>
           </div>
           <div className="mt-2">
-            <ProjectDepartments projectId={project.id} departments={project.departments} />
+            <ProjectDepartments projectId={project.id} departments={project.departments} options={config.departments} />
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">

@@ -9,7 +9,7 @@ function todayIso() {
   return new Date().toISOString().slice(0, 10)
 }
 
-export function NewProjectDialog({ teams }: { teams: Team[] }) {
+export function NewProjectDialog({ teams, departmentOptions }: { teams: Team[]; departmentOptions?: string[] }) {
   const [open, setOpen] = useState(false)
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState('')
@@ -76,7 +76,7 @@ export function NewProjectDialog({ teams }: { teams: Team[] }) {
                 <textarea className="fld" rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
               </Field>
               <Field label={`Departments ที่ใช้โปรเจกต์นี้ (เลือกได้หลายแผนก)${departments.length ? ` · ${departments.length}` : ''}`}>
-                <DepartmentPicker value={departments} onChange={setDepartments} />
+                <DepartmentPicker value={departments} onChange={setDepartments} options={departmentOptions} />
               </Field>
               {error && <p className="text-xs text-red-500">{error}</p>}
             </div>

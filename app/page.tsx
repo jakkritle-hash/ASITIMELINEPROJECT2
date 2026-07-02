@@ -1,12 +1,20 @@
 import { getDashboardData } from '@/lib/data/dashboard'
 import { getAdminData } from '@/lib/data/admin'
+import { getAppConfig } from '@/lib/data/config'
+import { getCurrentUser } from '@/lib/auth/session'
+import { canAccessPage } from '@/lib/domain/permissions'
 import { GanttChart } from '@/components/gantt/GanttChart'
 import { NewProjectDialog } from '@/components/project/NewProjectDialog'
+import { NoAccess } from '@/components/layout/NoAccess'
 
 export const dynamic = 'force-dynamic'
 
 export default async function DashboardPage() {
-  const [data, admin] = await Promise.all([getDashboardData(), getAdminData()])
+  const user = await getCurrentUser()
+  if (!user) return null
+  if (!canAccessPage(user, 'dashboard')) return <NoAccess user={user} />
+
+  const [data, admin, config] = await Promise.all([getDashboardData(), getAdminData(), getAppConfig()])
   const active = data.projects.filter((p) => !p.archived)
   const overdue = active.filter((p) => p.status === 'overdue').length
   const atRisk = active.filter((p) => p.status === 'at-risk').length
@@ -26,7 +34,7 @@ export default async function DashboardPage() {
             {data.usingFixtures && <span className="rounded bg-amber-50 px-2 py-0.5 text-amber-600">โหมดตัวอย่าง</span>}
           </p>
         </div>
-        <NewProjectDialog teams={admin.teams} />
+        <NewProjectDialog teams={admin.teams} departmentOptions={config.departments} />
       </header>
 
       <GanttChart projects={data.projects} />

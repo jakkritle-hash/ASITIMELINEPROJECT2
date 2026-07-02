@@ -10,6 +10,12 @@ export function toggleUserActive(users: User[], userId: string): User[] {
   return users.map((u) => (u.id === userId ? { ...u, active: !u.active } : u))
 }
 
+/** ตั้งรายการหน้าที่ "ปิดสิทธิ์" ให้ผู้ใช้ (ตัดซ้ำ) */
+export function setUserPageDenied(users: User[], userId: string, denied: string[]): User[] {
+  const clean = [...new Set(denied)]
+  return users.map((u) => (u.id === userId ? { ...u, pageDenied: clean } : u))
+}
+
 /** สร้างทีมใหม่ต่อท้าย (สมาชิกว่าง, ยังไม่มีหัวหน้า) */
 export function createTeam(teams: Team[], id: string, name: string, createdAt: string): Team[] {
   return [...teams, { id, name, memberIds: [], leadUserId: '', createdAt }]

@@ -19,8 +19,11 @@ export const DEPARTMENTS = [
 
 export type Department = (typeof DEPARTMENTS)[number]
 
-/** กรองเฉพาะแผนกที่อยู่ในลิสต์จริง + ตัดซ้ำ + คงลำดับตาม DEPARTMENTS */
-export function sanitizeDepartments(input: string[]): string[] {
+/**
+ * กรองเฉพาะแผนกที่อยู่ในลิสต์ที่อนุญาต + ตัดซ้ำ + คงลำดับตามลิสต์ที่อนุญาต
+ * @param allowed รายการแผนกที่ใช้ได้จริง (จาก Config) — ค่าเริ่มต้น = DEPARTMENTS คงที่
+ */
+export function sanitizeDepartments(input: string[], allowed: readonly string[] = DEPARTMENTS): string[] {
   const set = new Set(input)
-  return DEPARTMENTS.filter((d) => set.has(d))
+  return allowed.filter((d) => set.has(d))
 }

@@ -1,5 +1,6 @@
 import { getDashboardData } from './dashboard'
 import { getAdminData } from './admin'
+import { getAppConfig } from './config'
 import { computePerformance, type MemberStats } from '@/lib/domain/performance'
 
 export interface PerformanceData {
@@ -9,7 +10,7 @@ export interface PerformanceData {
 
 /** สรุปผลงานรายบุคคล (รวมทุกโปรเจกต์ทั้งที่ทำอยู่และเก็บถาวรแล้ว) */
 export async function getPerformance(): Promise<PerformanceData> {
-  const [data, admin] = await Promise.all([getDashboardData(), getAdminData()])
+  const [data, admin, config] = await Promise.all([getDashboardData(), getAdminData(), getAppConfig()])
   const tasks = data.projects.flatMap((p) =>
     p.tasks.map((t) => ({
       assigneeId: t.assigneeId,
@@ -21,6 +22,6 @@ export async function getPerformance(): Promise<PerformanceData> {
   )
   const projects = data.projects.map((p) => ({ id: p.id, memberIds: p.memberIds, ownerUserId: p.ownerUserId, departments: p.departments }))
   const projectNames = Object.fromEntries(data.projects.map((p) => [p.id, p.name]))
-  const stats = computePerformance(admin.users, tasks, projects).filter((s) => s.taskTotal > 0 || s.projectCount > 0)
+  const stats = computePerformance(admin.users, tasks, projects, config.weights).filter((s) => s.taskTotal > 0 || s.projectCount > 0)
   return { stats, projectNames }
 }

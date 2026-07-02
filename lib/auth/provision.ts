@@ -32,6 +32,7 @@ export async function provisionUser(email: string, name: string, now: string): P
     avatarColor: colorFor(email),
     active: true,
     createdAt: now,
+    pageDenied: [],
   }
   await appendRow('Users', serializeUser(user), TAB_HEADERS.Users as unknown as string[])
   return user

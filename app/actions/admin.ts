@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import type { Role, User } from '@/lib/domain/types'
 import { getTab, updateRowById, appendRow, deleteRowById, invalidateSheetCache } from '@/lib/sheets/repository'
 import { parseUser, parseTeam, serializeUser, serializeTeam, TAB_HEADERS } from '@/lib/sheets/schema'
-import { updateUserRole, toggleUserActive, addTeamMember, removeTeamMember, setTeamLead } from '@/lib/domain/adminOps'
+import { updateUserRole, toggleUserActive, setUserPageDenied, addTeamMember, removeTeamMember, setTeamLead } from '@/lib/domain/adminOps'
 import { canManageMembers } from '@/lib/domain/permissions'
 import { isAllowedEmail } from '@/lib/auth/policy'
 import { getCurrentUser } from '@/lib/auth/session'
@@ -48,6 +48,7 @@ export async function createMemberAction(input: { email: string; name: string; r
     avatarColor: PALETTE[users.length % PALETTE.length],
     active: true,
     createdAt: new Date().toISOString(),
+    pageDenied: [],
   }
   await appendRow('Users', serializeUser(user), U_HEADER)
   revalidatePath('/admin/members')
@@ -77,6 +78,21 @@ export async function toggleActiveAction(userId: string): Promise<ActionResult> 
   if (!updated) return { ok: false, error: 'not found' }
   await updateRowById('Users', userId, serializeUser(updated), U_HEADER)
   revalidatePath('/admin/members')
+  invalidateSheetCache()
+  return { ok: true }
+}
+
+/** ตั้งสิทธิ์เห็นหน้าของผู้ใช้ (ส่งรายการหน้าที่ "ปิด") — Admin เท่านั้น */
+export async function setUserPageAccessAction(userId: string, deniedPages: string[]): Promise<ActionResult> {
+  if (!sheetsConfigured()) return { ok: true }
+  const gate = await requireAdmin()
+  if (!gate.ok) return gate
+  const users = (await getTab('Users')).map(parseUser)
+  const updated = setUserPageDenied(users, userId, deniedPages).find((u) => u.id === userId)
+  if (!updated) return { ok: false, error: 'not found' }
+  await updateRowById('Users', userId, serializeUser(updated), U_HEADER)
+  revalidatePath('/admin/members')
+  revalidatePath('/', 'layout') // nav ต้องอัปเดตสิทธิ์เมนู
   invalidateSheetCache()
   return { ok: true }
 }

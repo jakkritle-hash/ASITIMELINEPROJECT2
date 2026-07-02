@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import { getNotifications } from '@/lib/data/notifications'
+import { getCurrentUser } from '@/lib/auth/session'
+import { accessiblePageKeys } from '@/lib/domain/permissions'
 import { Bell } from './Bell'
 import { NavLinks } from './NavLinks'
 
@@ -12,6 +14,15 @@ export async function NavBar() {
     unread = n.unread
   } catch {
     // ถ้าอ่าน Sheet พลาด (เช่น quota) — แสดง nav ปกติโดยไม่มีแจ้งเตือน
+  }
+
+  // แสดงเฉพาะเมนูที่ผู้ใช้ปัจจุบันเข้าถึงได้
+  let allowed: string[] = []
+  try {
+    const user = await getCurrentUser()
+    if (user) allowed = accessiblePageKeys(user)
+  } catch {
+    // ไม่มี user / อ่านพลาด — ไม่แสดงเมนู
   }
   return (
     <nav className="sticky top-0 z-30 border-b border-slate-900/[0.07] bg-white/70 shadow-[0_1px_0_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.15)] backdrop-blur-xl">
@@ -29,7 +40,7 @@ export async function NavBar() {
           </span>
         </Link>
 
-        <NavLinks />
+        <NavLinks allowed={allowed} />
 
         <Bell items={items} unread={unread} />
       </div>

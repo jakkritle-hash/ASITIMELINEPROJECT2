@@ -1,4 +1,7 @@
 import { getPerformance } from '@/lib/data/performance'
+import { getCurrentUser } from '@/lib/auth/session'
+import { canAccessPage } from '@/lib/domain/permissions'
+import { NoAccess } from '@/components/layout/NoAccess'
 import { Avatar } from '@/components/ui/Avatar'
 import { STATUS_META } from '@/components/ui/StatusBadge'
 
@@ -12,6 +15,10 @@ const MEDALS: Record<number, { icon: string; label: string; ring: string; badge:
 }
 
 export default async function PerformancePage() {
+  const user = await getCurrentUser()
+  if (!user) return null
+  if (!canAccessPage(user, 'performance')) return <NoAccess user={user} />
+
   const { stats, projectNames } = await getPerformance()
 
   return (

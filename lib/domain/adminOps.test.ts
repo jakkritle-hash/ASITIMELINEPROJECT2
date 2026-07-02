@@ -3,8 +3,8 @@ import { updateUserRole, toggleUserActive, createTeam, addTeamMember, removeTeam
 import type { User, Team } from './types'
 
 const users: User[] = [
-  { id: 'u1', email: 'a@x.co', name: 'A', role: 'Member', avatarColor: '#000', active: true, createdAt: '' },
-  { id: 'u2', email: 'b@x.co', name: 'B', role: 'Member', avatarColor: '#111', active: true, createdAt: '' },
+  { id: 'u1', email: 'a@x.co', name: 'A', role: 'Member', avatarColor: '#000', active: true, createdAt: '', pageDenied: [] },
+  { id: 'u2', email: 'b@x.co', name: 'B', role: 'Member', avatarColor: '#111', active: true, createdAt: '', pageDenied: [] },
 ]
 const teams: Team[] = [{ id: 't1', name: 'Marketing', memberIds: ['u1'], leadUserId: 'u1', createdAt: '' }]
 

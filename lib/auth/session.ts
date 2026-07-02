@@ -33,5 +33,6 @@ export async function getCurrentUser(): Promise<User | null> {
     avatarColor: '#94a3b8',
     active: true,
     createdAt: '',
+    pageDenied: [],
   }
 }

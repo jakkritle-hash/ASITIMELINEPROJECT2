@@ -44,14 +44,22 @@ export interface MemberStats {
   rank: number
 }
 
-/** น้ำหนักคะแนน — ปรับได้ที่นี่ที่เดียว (Department = สูงสุดตามที่ผู้ใช้กำหนด) */
-export const WEIGHTS = {
+export interface Weights {
+  departmentLoad: number
+  taskDone: number
+  onTimeRate: number
+  workingDays: number
+  overdue: number
+}
+
+/** น้ำหนักคะแนนตั้งต้น — ปรับ runtime ได้ในหน้า Control Data (เก็บใน Config tab) */
+export const WEIGHTS: Weights = {
   departmentLoad: 15, // ← น้ำหนักสูงสุด: จำนวน Department ที่โปรเจกต์นี้ใช้
   taskDone: 10, // งานที่ปิดจบจริง (ส่งตรงเวลา)
   onTimeRate: 0.5, // อัตราตรงเวลาในโปรเจกต์นี้ (ความน่าเชื่อถือ)
   workingDays: 1, // วันทำการที่ลงแรงในโปรเจกต์นี้
   overdue: -8, // penalty งานเลยกำหนด
-} as const
+}
 
 /**
  * คะแนนของ "หนึ่งโปรเจกต์" ที่บุคคลรับ:
@@ -60,18 +68,18 @@ export const WEIGHTS = {
  * คะแนนรวมของบุคคล = ผลบวกของ projectScore ทุกโปรเจกต์ที่เขาเกี่ยวข้อง
  * (คิดแยกทีละโปรเจกต์แล้วเอามารวมกัน)
  */
-export function projectScore(p: Pick<ProjectScore, 'deptCount' | 'taskDone' | 'onTimeRate' | 'workingDays' | 'overdue'>): number {
+export function projectScore(p: Pick<ProjectScore, 'deptCount' | 'taskDone' | 'onTimeRate' | 'workingDays' | 'overdue'>, w: Weights = WEIGHTS): number {
   return Math.round(
-    p.deptCount * WEIGHTS.departmentLoad +
-      p.taskDone * WEIGHTS.taskDone +
-      p.onTimeRate * WEIGHTS.onTimeRate +
-      p.workingDays * WEIGHTS.workingDays +
-      p.overdue * WEIGHTS.overdue,
+    p.deptCount * w.departmentLoad +
+      p.taskDone * w.taskDone +
+      p.onTimeRate * w.onTimeRate +
+      p.workingDays * w.workingDays +
+      p.overdue * w.overdue,
   )
 }
 
-/** สรุปผลงานรายบุคคล — คิดคะแนนแยกทีละโปรเจกต์แล้วรวมกัน */
-export function computePerformance(users: User[], tasks: PerfTask[], projects: PerfProject[]): MemberStats[] {
+/** สรุปผลงานรายบุคคล — คิดคะแนนแยกทีละโปรเจกต์แล้วรวมกัน (น้ำหนักปรับได้จาก Control Data) */
+export function computePerformance(users: User[], tasks: PerfTask[], projects: PerfProject[], weights: Weights = WEIGHTS): MemberStats[] {
   const deptCountById = new Map(projects.map((p) => [p.id, p.departments.length]))
   const stats = users
     .map((u): MemberStats => {
@@ -90,7 +98,7 @@ export function computePerformance(users: User[], tasks: PerfTask[], projects: P
         const overdue = inProj.filter((t) => t.slaStatus === 'overdue').length
         const workingDays = inProj.reduce((s, t) => s + t.workingDays, 0)
         const onTimeRate = inProj.length ? Math.round((taskDone / inProj.length) * 100) : 0
-        return { projectId: pid, deptCount, taskTotal: inProj.length, taskDone, overdue, workingDays, onTimeRate, score: projectScore({ deptCount, taskDone, onTimeRate, workingDays, overdue }) }
+        return { projectId: pid, deptCount, taskTotal: inProj.length, taskDone, overdue, workingDays, onTimeRate, score: projectScore({ deptCount, taskDone, onTimeRate, workingDays, overdue }, weights) }
       })
       // เรียงโปรเจกต์คะแนนมาก→น้อยเพื่อโชว์
       projectScores.sort((a, b) => b.score - a.score)

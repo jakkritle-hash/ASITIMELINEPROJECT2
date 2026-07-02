@@ -2,15 +2,18 @@
 
 import { DEPARTMENTS } from '@/lib/domain/departments'
 
-/** ตัวเลือก Department แบบ chip กดสลับ เลือกได้หลายแผนก (controlled) */
+/** ตัวเลือก Department แบบ chip กดสลับ เลือกได้หลายแผนก (controlled)
+ *  options = รายการแผนกจาก Control Data (ค่าเริ่มต้น = DEPARTMENTS คงที่) */
 export function DepartmentPicker({
   value,
   onChange,
   disabled,
+  options = DEPARTMENTS,
 }: {
   value: string[]
   onChange: (next: string[]) => void
   disabled?: boolean
+  options?: readonly string[]
 }) {
   const selected = new Set(value)
   function toggle(dept: string) {
@@ -18,12 +21,15 @@ export function DepartmentPicker({
     const next = new Set(selected)
     if (next.has(dept)) next.delete(dept)
     else next.add(dept)
-    // คงลำดับตาม DEPARTMENTS เสมอ
-    onChange(DEPARTMENTS.filter((d) => next.has(d)))
+    // คงลำดับตาม options เสมอ
+    onChange(options.filter((d) => next.has(d)))
   }
   return (
     <div className="flex flex-wrap gap-1.5">
-      {DEPARTMENTS.map((d) => {
+      {options.length === 0 && (
+        <span className="text-[11px] text-gray-400">— ยังไม่มี Department (เพิ่มได้ที่หน้า Control Data) —</span>
+      )}
+      {options.map((d) => {
         const on = selected.has(d)
         return (
           <button

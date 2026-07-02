@@ -5,7 +5,7 @@ import { setProjectDepartmentsAction } from '@/app/actions/projects'
 import { DepartmentPicker } from './DepartmentPicker'
 
 /** แสดง Department ที่ใช้โปรเจกต์ + แก้ไข/เพิ่มได้ทุกเมื่อ (ส่งกลับมาที่หน้า Approve) */
-export function ProjectDepartments({ projectId, departments }: { projectId: string; departments: string[] }) {
+export function ProjectDepartments({ projectId, departments, options }: { projectId: string; departments: string[]; options?: string[] }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState<string[]>(departments)
   const [pending, startTransition] = useTransition()
@@ -28,7 +28,7 @@ export function ProjectDepartments({ projectId, departments }: { projectId: stri
     return (
       <div className="rounded-xl border border-gray-200 bg-gray-50/60 p-3">
         <div className="mb-2 text-[11px] font-medium text-gray-500">เลือก Department ที่ใช้โปรเจกต์นี้ (เลือกได้หลายแผนก)</div>
-        <DepartmentPicker value={draft} onChange={setDraft} disabled={pending} />
+        <DepartmentPicker value={draft} onChange={setDraft} disabled={pending} options={options} />
         {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
         <div className="mt-3 flex items-center gap-2">
           <button

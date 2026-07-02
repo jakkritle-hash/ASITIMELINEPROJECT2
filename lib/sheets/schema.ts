@@ -1,7 +1,7 @@
 import type { User, Team, Project, Task, ActivityLogEntry, Role, SlaStatus } from '@/lib/domain/types'
 
 export const TAB_HEADERS = {
-  Users: ['id', 'email', 'name', 'role', 'avatarColor', 'active', 'createdAt'],
+  Users: ['id', 'email', 'name', 'role', 'avatarColor', 'active', 'createdAt', 'pageDenied'],
   Teams: ['id', 'name', 'memberIds', 'leadUserId', 'createdAt'],
   Projects: ['id', 'name', 'teamId', 'memberIds', 'ownerUserId', 'startDate', 'dueDate', 'status', 'description', 'kanbanColumns', 'createdAt', 'updatedAt', 'archived', 'departments'],
   Tasks: ['id', 'projectId', 'title', 'assigneeId', 'columnStatus', 'startDate', 'dueDate', 'slaStatus', 'editCount', 'description', 'order', 'createdAt', 'updatedAt'],
@@ -16,7 +16,7 @@ const arrToCsv = (a: string[] = []): string => a.join(',')
 const toBool = (s: string): boolean => s === 'true' || s === 'TRUE'
 
 export function parseUser(r: Record<string, string>): User {
-  return { id: r.id, email: r.email, name: r.name, role: (r.role as Role) || 'Member', avatarColor: r.avatarColor || '#94a3b8', active: toBool(r.active), createdAt: r.createdAt }
+  return { id: r.id, email: r.email, name: r.name, role: (r.role as Role) || 'Member', avatarColor: r.avatarColor || '#94a3b8', active: toBool(r.active), createdAt: r.createdAt, pageDenied: csvToArr(r.pageDenied) }
 }
 export function parseTeam(r: Record<string, string>): Team {
   return { id: r.id, name: r.name, memberIds: csvToArr(r.memberIds), leadUserId: r.leadUserId || '', createdAt: r.createdAt }
@@ -47,7 +47,7 @@ export function parseLog(r: Record<string, string>): ActivityLogEntry {
 }
 
 export function serializeUser(u: User): Record<string, string> {
-  return { ...u, active: String(u.active) }
+  return { ...u, active: String(u.active), pageDenied: arrToCsv(u.pageDenied) }
 }
 export function serializeTeam(t: Team): Record<string, string> {
   return { ...t, memberIds: arrToCsv(t.memberIds) }

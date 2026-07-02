@@ -9,6 +9,8 @@ export interface User {
   avatarColor: string
   active: boolean
   createdAt: string
+  /** คีย์ของหน้า (content page) ที่ถูก "ปิดสิทธิ์" ให้ผู้ใช้คนนี้ — ว่าง = เข้าได้ทุกหน้า */
+  pageDenied: string[]
 }
 
 export interface Team {

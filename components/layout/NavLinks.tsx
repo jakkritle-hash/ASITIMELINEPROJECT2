@@ -2,19 +2,16 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { PAGES } from '@/lib/domain/pages'
 
-const LINKS = [
-  { href: '/', label: 'Dashboard' },
-  { href: '/performance', label: 'Performance' },
-  { href: '/admin/members', label: 'Team Member' },
-  { href: '/admin/teams', label: 'Team' },
-]
-
-export function NavLinks() {
+/** เมนู — แสดงเฉพาะหน้าที่ผู้ใช้มีสิทธิ์เข้าถึง (allowed = คีย์หน้าที่เข้าได้) */
+export function NavLinks({ allowed }: { allowed: string[] }) {
   const pathname = usePathname()
+  const set = new Set(allowed)
+  const links = PAGES.filter((p) => set.has(p.key))
   return (
     <div className="flex items-center gap-0.5 overflow-x-auto">
-      {LINKS.map((l) => {
+      {links.map((l) => {
         const active = l.href === '/' ? pathname === '/' : pathname.startsWith(l.href)
         return (
           <Link

@@ -131,6 +131,31 @@ export async function deleteRowById(tab: string, id: string): Promise<boolean> {
   return true
 }
 
+/** อ่าน Config tab เป็น map { key: value } (มี cache) */
+export async function getConfigMap(): Promise<Record<string, string>> {
+  const rows = await getTabCached('Config')
+  const map: Record<string, string> = {}
+  for (const r of rows) if (r.key) map[r.key] = r.value ?? ''
+  return map
+}
+
+/** upsert ค่าใน Config tab (หาแถวตาม key; ไม่มีก็ append) — Config มีคอลัมน์ key/value ไม่มี id */
+export async function setConfigValue(key: string, value: string): Promise<void> {
+  const rows = await getTab('Config')
+  const idx = rows.findIndex((r) => r.key === key)
+  if (idx === -1) {
+    await appendRow('Config', { key, value }, ['key', 'value'])
+    return
+  }
+  const sheets = getSheetsClient()
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: getSheetId(),
+    range: `Config!A${idx + 2}`, // +1 header, +1 ฐาน 1
+    valueInputOption: 'RAW',
+    requestBody: { values: [[key, value]] },
+  })
+}
+
 /** สร้าง tab ที่ยังไม่มี + เขียน header แถวแรกให้ครบทั้ง 6 tab (ใช้ตอน seed) */
 export async function ensureTabsAndHeaders(): Promise<{ created: string[] }> {
   const sheets = getSheetsClient()
