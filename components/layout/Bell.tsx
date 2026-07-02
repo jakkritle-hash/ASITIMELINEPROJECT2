@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import type { NotificationItem } from '@/lib/data/notifications'
 
@@ -18,6 +18,24 @@ export function Bell({ items, unread: serverUnread }: { items: NotificationItem[
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [readIds, setReadIds] = useState<Set<string>>(new Set())
+  const rootRef = useRef<HTMLDivElement>(null)
+
+  // ปิด dropdown เมื่อคลิกที่อื่นในหน้า หรือกด Esc
+  useEffect(() => {
+    if (!open) return
+    function onPointerDown(e: PointerEvent) {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false)
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
 
   // โหลดสถานะ "อ่านแล้ว" จาก localStorage หลัง mount (กัน hydration mismatch)
   useEffect(() => {
@@ -49,7 +67,7 @@ export function Bell({ items, unread: serverUnread }: { items: NotificationItem[
   const unread = mounted ? items.filter((i) => !readIds.has(i.id)).length : serverUnread
 
   return (
-    <div className="relative ml-auto">
+    <div ref={rootRef} className="relative ml-auto">
       <button
         onClick={() => setOpen((o) => !o)}
         className="relative flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100"
@@ -65,7 +83,6 @@ export function Bell({ items, unread: serverUnread }: { items: NotificationItem[
 
       {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute right-0 z-50 mt-2 max-h-[70vh] w-80 overflow-y-auto rounded-xl border border-gray-100 bg-white shadow-xl">
             <div className="sticky top-0 flex items-center justify-between border-b border-gray-100 bg-white px-4 py-2.5">
               <span className="text-sm font-semibold text-gray-800">การแจ้งเตือน{unread > 0 && ` (${unread})`}</span>
