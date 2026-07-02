@@ -30,6 +30,7 @@ export async function NavBar() {
 
         <div className="flex items-center gap-0.5 overflow-x-auto">
           <NavLink href="/">Dashboard</NavLink>
+          <NavLink href="/performance">Performance</NavLink>
           <NavLink href="/admin/members">Team Member</NavLink>
           <NavLink href="/admin/teams">Team</NavLink>
         </div>
