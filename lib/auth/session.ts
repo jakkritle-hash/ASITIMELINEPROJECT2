@@ -13,8 +13,10 @@ export async function getCurrentUser(): Promise<User | null> {
   const email = session?.user?.email
 
   if (!email) {
-    // dev/demo fallback เมื่อยังไม่ได้ต่อ auth จริง
-    if (!process.env.AUTH_GOOGLE_ID) return FIXTURE_USERS[0]
+    // dev/demo fallback เมื่อยังไม่ได้เปิด OAuth login:
+    // ทำหน้าที่เป็น "Admin" (คุณคือผู้ดูแลตาม BOOTSTRAP_ADMIN_EMAILS) เพื่อให้จัดการทีม/สมาชิกได้
+    // เมื่อเปิด AUTH_GOOGLE_ID จริง จะใช้ session จริงแทน (สิทธิ์ตาม role ใน Users tab)
+    if (!process.env.AUTH_GOOGLE_ID) return { ...FIXTURE_USERS[0], role: 'Admin' }
     return null
   }
 
