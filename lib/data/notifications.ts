@@ -22,8 +22,9 @@ export async function getNotifications(): Promise<{ items: NotificationItem[]; u
   const data = await getDashboardData()
   const items: NotificationItem[] = []
 
-  // SLA alerts
+  // SLA alerts (ข้ามโปรเจกต์ที่เก็บถาวรแล้ว)
   for (const p of data.projects) {
+    if (p.archived) continue
     for (const t of p.tasks) {
       if (t.slaStatus === 'overdue') {
         items.push({ id: `sla-${t.id}`, kind: 'overdue', text: `เกินกำหนด: ${t.title} (${p.name})`, href: `/projects/${p.id}` })

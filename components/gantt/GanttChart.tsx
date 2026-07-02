@@ -20,13 +20,16 @@ function todayIso() {
 
 export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
   const [zoom, setZoom] = useState<ZoomLevel>('month')
-  const [expanded, setExpanded] = useState<Set<string>>(new Set(projects[0] ? [projects[0].id] : []))
+  const [showArchived, setShowArchived] = useState(false)
+  const archivedCount = projects.filter((p) => p.archived).length
+  const visible = projects.filter((p) => showArchived || !p.archived)
+  const [expanded, setExpanded] = useState<Set<string>>(new Set(visible[0] ? [visible[0].id] : []))
 
   const range: DateRange | null = timelineRange([
-    ...projects.map((p) => ({ startDate: p.startDate, dueDate: p.dueDate })),
-    ...projects.flatMap((p) => p.tasks.map((t) => ({ startDate: t.startDate, dueDate: t.dueDate }))),
+    ...visible.map((p) => ({ startDate: p.startDate, dueDate: p.dueDate })),
+    ...visible.flatMap((p) => p.tasks.map((t) => ({ startDate: t.startDate, dueDate: t.dueDate }))),
   ])
-  if (!range) return <p className="p-6 text-sm text-gray-500">ยังไม่มีโปรเจกต์</p>
+  if (!range) return <p className="p-6 text-sm text-gray-500">ยังไม่มีโปรเจกต์ที่แสดง</p>
 
   const totalDays = Math.max(1, differenceInCalendarDays(new Date(range.end), new Date(range.start)))
   const timelineW = Math.max(600, Math.round(totalDays * PX_PER_DAY[zoom]))
@@ -46,8 +49,21 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white">
-      <div className="flex items-center justify-between border-b border-gray-100 p-3">
-        <span className="text-xs text-gray-500">Timeline รวมทุกโปรเจกต์</span>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 p-3">
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-gray-500">Timeline รวมทุกโปรเจกต์</span>
+          {archivedCount > 0 && (
+            <button
+              onClick={() => setShowArchived((v) => !v)}
+              className={
+                'rounded-md px-2 py-1 text-[11px] transition ' +
+                (showArchived ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200')
+              }
+            >
+              {showArchived ? 'ซ่อนที่เก็บถาวร' : `📦 ที่เก็บถาวร (${archivedCount})`}
+            </button>
+          )}
+        </div>
         <ZoomControl zoom={zoom} onChange={setZoom} />
       </div>
 
@@ -75,7 +91,7 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
           ))}
 
           {/* Rows */}
-          {projects.map((p) => {
+          {visible.map((p) => {
             const pm = barMetrics(p.startDate, p.dueDate, range)
             const pMeta = STATUS_META[p.status]
             const isOpen = expanded.has(p.id)
@@ -96,6 +112,19 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
                     <span className="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-500" title="วันทำการรวมของโปรเจกต์">
                       {p.workingDays}d
                     </span>
+                    {p.complete ? (
+                      <span className="shrink-0 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700" title="เสร็จครบทุกงาน">
+                        ✅ เสร็จ
+                      </span>
+                    ) : (
+                      <span className="flex shrink-0 items-center gap-1" title={`ความคืบหน้า ${p.progress}%`}>
+                        <span className="h-1.5 w-10 overflow-hidden rounded-full bg-gray-200">
+                          <span className="block h-full rounded-full bg-blue-500" style={{ width: `${p.progress}%` }} />
+                        </span>
+                        <span className="text-[10px] text-gray-500">{p.progress}%</span>
+                      </span>
+                    )}
+                    {p.archived && <span className="shrink-0 text-[10px] text-gray-400" title="เก็บถาวรแล้ว">📦</span>}
                     <span className="ml-auto">
                       <AvatarGroup users={p.members} size={18} />
                     </span>

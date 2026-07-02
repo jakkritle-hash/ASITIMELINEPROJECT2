@@ -1,6 +1,7 @@
 import type { User, Project, Task, SlaStatus } from '@/lib/domain/types'
 import { computeSlaStatus } from '@/lib/domain/sla'
 import { workingDaysBetween } from '@/lib/domain/workingDays'
+import { projectProgress, isProjectComplete } from '@/lib/domain/progress'
 import { TH_HOLIDAYS } from '@/lib/domain/holidays'
 import { getTabCached } from '@/lib/sheets/repository'
 import { parseUser, parseProject, parseTask } from '@/lib/sheets/schema'
@@ -35,6 +36,8 @@ export interface EnrichedProject extends Project {
   members: User[]
   tasks: EnrichedTask[]
   workingDays: number
+  progress: number
+  complete: boolean
 }
 export interface DashboardData {
   projects: EnrichedProject[]
@@ -71,6 +74,8 @@ function enrich(users: User[], projects: Project[], tasks: Task[], now: Date): E
       tasks: projTasks,
       status: worstStatus(projTasks.map((t) => t.slaStatus)),
       workingDays: workingDaysBetween(p.startDate, p.dueDate, TH_HOLIDAYS),
+      progress: projectProgress(projTasks),
+      complete: isProjectComplete(projTasks),
     }
   })
 }

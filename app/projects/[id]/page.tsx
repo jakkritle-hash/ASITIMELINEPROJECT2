@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { getProjectData } from '@/lib/data/project'
 import { KanbanBoard } from '@/components/kanban/KanbanBoard'
 import { NewTaskDialog } from '@/components/kanban/NewTaskDialog'
+import { ProjectActions } from '@/components/project/ProjectActions'
 import { AvatarGroup } from '@/components/ui/Avatar'
 import { STATUS_META } from '@/components/ui/StatusBadge'
 
@@ -24,17 +25,26 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-lg font-semibold text-gray-900 sm:text-xl">{project.name}</h1>
-            <span className="rounded px-2 py-0.5 text-[11px]" style={{ backgroundColor: meta.bg, color: meta.fg }}>
-              {meta.symbol} {meta.label}
-            </span>
+            {project.complete ? (
+              <span className="rounded bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-700">✅ เสร็จแล้ว</span>
+            ) : (
+              <span className="rounded px-2 py-0.5 text-[11px]" style={{ backgroundColor: meta.bg, color: meta.fg }}>
+                {meta.symbol} {meta.label}
+              </span>
+            )}
+            {project.archived && <span className="rounded bg-gray-100 px-2 py-0.5 text-[11px] text-gray-500">📦 เก็บถาวร</span>}
           </div>
-          <p className="text-xs text-gray-500">
-            {project.startDate} → {project.dueDate} · {project.tasks.length} งาน
-          </p>
+          <div className="mt-1 flex items-center gap-2">
+            <div className="h-2 w-40 overflow-hidden rounded-full bg-gray-200">
+              <div className="h-full rounded-full bg-blue-500" style={{ width: `${project.progress}%` }} />
+            </div>
+            <span className="text-xs text-gray-500">{project.progress}% · {project.startDate} → {project.dueDate} · {project.tasks.length} งาน</span>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <AvatarGroup users={project.members} size={22} />
           <NewTaskDialog projectId={project.id} users={users} />
+          <ProjectActions projectId={project.id} archived={project.archived} />
         </div>
       </header>
 

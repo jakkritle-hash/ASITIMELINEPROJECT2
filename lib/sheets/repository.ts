@@ -100,6 +100,37 @@ export async function updateRowById(tab: string, id: string, obj: Record<string,
   return true
 }
 
+/** หา sheetId (gid) ของ tab ตามชื่อ */
+async function getGid(tab: string): Promise<number | null> {
+  const sheets = getSheetsClient()
+  const meta = await sheets.spreadsheets.get({ spreadsheetId: getSheetId() })
+  const s = (meta.data.sheets ?? []).find((x) => x.properties?.title === tab)
+  return s?.properties?.sheetId ?? null
+}
+
+/** ลบแถวที่ id ตรงออกจริง (deleteDimension) — คืน false ถ้าไม่พบ */
+export async function deleteRowById(tab: string, id: string): Promise<boolean> {
+  const rows = await getTab(tab)
+  const idx = rows.findIndex((r) => r.id === id)
+  if (idx === -1) return false
+  const gid = await getGid(tab)
+  if (gid == null) return false
+  const sheets = getSheetsClient()
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: getSheetId(),
+    requestBody: {
+      requests: [
+        {
+          deleteDimension: {
+            range: { sheetId: gid, dimension: 'ROWS', startIndex: idx + 1, endIndex: idx + 2 }, // +1 ข้าม header
+          },
+        },
+      ],
+    },
+  })
+  return true
+}
+
 /** สร้าง tab ที่ยังไม่มี + เขียน header แถวแรกให้ครบทั้ง 6 tab (ใช้ตอน seed) */
 export async function ensureTabsAndHeaders(): Promise<{ created: string[] }> {
   const sheets = getSheetsClient()

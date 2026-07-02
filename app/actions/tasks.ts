@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import type { Task, Project, Team } from '@/lib/domain/types'
-import { getTab, updateRowById, appendRows, invalidateSheetCache } from '@/lib/sheets/repository'
+import { getTab, updateRowById, appendRows, deleteRowById, invalidateSheetCache } from '@/lib/sheets/repository'
 import { parseTask, parseProject, parseTeam, serializeTask, serializeLog, TAB_HEADERS } from '@/lib/sheets/schema'
 import { applyTaskEdit, makeMoveLog } from '@/lib/domain/activity'
 import { computeSlaStatus } from '@/lib/domain/sla'
@@ -120,6 +120,28 @@ export async function editTaskAction(taskId: string, changes: Partial<Task>, exp
   const final = recomputeSla(edited)
   await updateRowById('Tasks', taskId, serializeTask(final), HEADER)
   await appendRows('ActivityLog', logs.map(serializeLog), LOG_HEADER)
+  revalidatePath(`/projects/${ctx.project.id}`)
+  revalidatePath('/')
+  invalidateSheetCache()
+  return { ok: true }
+}
+
+/** ลบ task (ใช้กรณีสร้างผิด/ยกเลิก) — ตรวจสิทธิ์ + log */
+export async function deleteTaskAction(taskId: string): Promise<ActionResult> {
+  if (!sheetsConfigured()) return { ok: true }
+  const user = await getCurrentUser()
+  if (!user) return { ok: false, error: 'unauthenticated' }
+  const ctx = await loadContext(taskId)
+  if (!ctx) return { ok: false, error: 'not found' }
+  const leadTeamIds = ctx.leadTeamIds.filter((s) => s.endsWith(':' + user.id)).map((s) => s.split(':')[0])
+  if (!canEditTask(user, ctx.task, ctx.project, leadTeamIds)) return { ok: false, error: 'forbidden' }
+
+  const now = new Date().toISOString()
+  await deleteRowById('Tasks', taskId)
+  await appendRows('ActivityLog', [serializeLog({
+    id: `${taskId}-${now}-delete`, timestamp: now, actorId: user.id,
+    entityType: 'task', entityId: taskId, action: 'delete', field: 'title', oldValue: ctx.task.title, newValue: '',
+  })], LOG_HEADER)
   revalidatePath(`/projects/${ctx.project.id}`)
   revalidatePath('/')
   invalidateSheetCache()

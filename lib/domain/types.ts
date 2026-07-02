@@ -30,6 +30,7 @@ export interface Project {
   status: SlaStatus
   description: string
   kanbanColumns: string[]
+  archived: boolean
   createdAt: string
   updatedAt: string
 }

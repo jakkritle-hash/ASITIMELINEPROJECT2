@@ -17,19 +17,19 @@ export const FIXTURE_PROJECTS: Project[] = [
   {
     id: 'p1', name: 'Rebrand เว็บบริษัท', teamId: 't1', memberIds: ['u1', 'u2', 'u4'], ownerUserId: 'u1',
     startDate: '2026-07-01', dueDate: '2026-08-20', status: 'on-track',
-    description: 'ออกแบบและพัฒนาเว็บใหม่', kanbanColumns: ['To Do', 'In Progress', 'Review', 'Done'],
+    description: 'ออกแบบและพัฒนาเว็บใหม่', kanbanColumns: ['To Do', 'In Progress', 'Review', 'Done'], archived: false,
     createdAt: '2026-06-20', updatedAt: '2026-06-28',
   },
   {
     id: 'p2', name: 'แคมเปญ Q3 (ยิงแอด)', teamId: 't1', memberIds: ['u5', 'u1'], ownerUserId: 'u5',
     startDate: '2026-07-10', dueDate: '2026-09-05', status: 'at-risk',
-    description: 'แคมเปญโฆษณาไตรมาส 3', kanbanColumns: ['To Do', 'In Progress', 'Review', 'Done'],
+    description: 'แคมเปญโฆษณาไตรมาส 3', kanbanColumns: ['To Do', 'In Progress', 'Review', 'Done'], archived: false,
     createdAt: '2026-06-25', updatedAt: '2026-06-29',
   },
   {
     id: 'p3', name: 'ระบบ CRM ภายใน', teamId: 't2', memberIds: ['u3', 'u4'], ownerUserId: 'u3',
     startDate: '2026-06-15', dueDate: '2026-10-01', status: 'overdue',
-    description: 'พัฒนา CRM สำหรับทีมขาย', kanbanColumns: ['To Do', 'In Progress', 'Review', 'Done'],
+    description: 'พัฒนา CRM สำหรับทีมขาย', kanbanColumns: ['To Do', 'In Progress', 'Review', 'Done'], archived: false,
     createdAt: '2026-06-10', updatedAt: '2026-06-27',
   },
 ]

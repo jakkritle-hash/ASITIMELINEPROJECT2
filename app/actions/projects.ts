@@ -1,9 +1,10 @@
 'use server'
 
-import { revalidatePath, revalidateTag } from 'next/cache'
+import { revalidatePath } from 'next/cache'
 import type { Project } from '@/lib/domain/types'
-import { getTab, appendRow, invalidateSheetCache } from '@/lib/sheets/repository'
-import { serializeProject, TAB_HEADERS } from '@/lib/sheets/schema'
+import { getTab, appendRow, updateRowById, deleteRowById, invalidateSheetCache } from '@/lib/sheets/repository'
+import { serializeProject, parseProject, parseTask, parseTeam, TAB_HEADERS } from '@/lib/sheets/schema'
+import { canEditProject } from '@/lib/domain/permissions'
 import { getCurrentUser } from '@/lib/auth/session'
 import { sheetsConfigured } from '@/lib/data/dashboard'
 
@@ -48,6 +49,7 @@ export async function createProjectAction(input: NewProjectInput): Promise<Creat
     status: 'on-track',
     description: input.description || '',
     kanbanColumns: DEFAULT_COLUMNS,
+    archived: false,
     createdAt: now,
     updatedAt: now,
   }
@@ -55,4 +57,45 @@ export async function createProjectAction(input: NewProjectInput): Promise<Creat
   revalidatePath('/')
   invalidateSheetCache()
   return { ok: true, id }
+}
+
+async function loadProjectForEdit(projectId: string) {
+  const user = await getCurrentUser()
+  if (!user) return { error: 'unauthenticated' as const }
+  const [projects, teams] = await Promise.all([
+    getTab('Projects').then((r) => r.map(parseProject)),
+    getTab('Teams').then((r) => r.map(parseTeam)),
+  ])
+  const project = projects.find((p) => p.id === projectId)
+  if (!project) return { error: 'not found' as const }
+  const leadTeamIds = teams.filter((t) => t.leadUserId === user.id).map((t) => t.id)
+  if (!canEditProject(user, project, leadTeamIds)) return { error: 'forbidden' as const }
+  return { project }
+}
+
+/** เก็บถาวร/เลิกเก็บถาวรโปรเจกต์ (ซ่อน/แสดงใน Dashboard) */
+export async function setProjectArchivedAction(projectId: string, archived: boolean): Promise<CreateResult> {
+  if (!sheetsConfigured()) return { ok: true }
+  const ctx = await loadProjectForEdit(projectId)
+  if ('error' in ctx) return { ok: false, error: ctx.error }
+  const updated: Project = { ...ctx.project, archived, updatedAt: new Date().toISOString() }
+  await updateRowById('Projects', projectId, serializeProject(updated), P_HEADER)
+  revalidatePath('/')
+  revalidatePath(`/projects/${projectId}`)
+  invalidateSheetCache()
+  return { ok: true }
+}
+
+/** ลบโปรเจกต์ + task ทั้งหมดในโปรเจกต์นั้น (ใช้กรณีสร้างผิด/ยกเลิก) */
+export async function deleteProjectAction(projectId: string): Promise<CreateResult> {
+  if (!sheetsConfigured()) return { ok: true }
+  const ctx = await loadProjectForEdit(projectId)
+  if ('error' in ctx) return { ok: false, error: ctx.error }
+  // ลบ task ของโปรเจกต์ก่อน (อ่านสดทุกครั้งเพื่อ index ถูกต้อง)
+  const taskIds = (await getTab('Tasks')).map(parseTask).filter((t) => t.projectId === projectId).map((t) => t.id)
+  for (const tid of taskIds) await deleteRowById('Tasks', tid)
+  await deleteRowById('Projects', projectId)
+  revalidatePath('/')
+  invalidateSheetCache()
+  return { ok: true }
 }

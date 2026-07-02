@@ -7,8 +7,10 @@ export const dynamic = 'force-dynamic'
 
 export default async function DashboardPage() {
   const [data, admin] = await Promise.all([getDashboardData(), getAdminData()])
-  const overdue = data.projects.filter((p) => p.status === 'overdue').length
-  const atRisk = data.projects.filter((p) => p.status === 'at-risk').length
+  const active = data.projects.filter((p) => !p.archived)
+  const overdue = active.filter((p) => p.status === 'overdue').length
+  const atRisk = active.filter((p) => p.status === 'at-risk').length
+  const activeWorkingDays = active.reduce((s, p) => s + p.workingDays, 0)
 
   return (
     <main className="w-full px-4 py-6 sm:px-6 lg:px-8">
@@ -16,9 +18,9 @@ export default async function DashboardPage() {
         <div>
           <h1 className="text-lg font-semibold text-gray-900 sm:text-xl">Dashboard</h1>
           <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
-            <span>ทั้งหมด {data.projects.length} โปรเจกต์</span>
+            <span>ที่กำลังทำ {active.length} โปรเจกต์</span>
             <span className="text-gray-400">·</span>
-            <span title="วันทำการรวมทุกโปรเจกต์ (ตัดเสาร์-อาทิตย์ + วันหยุดไทย)">รวม {data.totalWorkingDays} วันทำการ</span>
+            <span title="วันทำการรวม (เฉพาะที่ยังไม่เก็บถาวร)">รวม {activeWorkingDays} วันทำการ</span>
             {overdue > 0 && <span className="text-red-500">🔴 {overdue} เกินกำหนด</span>}
             {atRisk > 0 && <span className="text-amber-500">🟠 {atRisk} ใกล้ครบ</span>}
             {data.usingFixtures && <span className="rounded bg-amber-50 px-2 py-0.5 text-amber-600">โหมดตัวอย่าง</span>}

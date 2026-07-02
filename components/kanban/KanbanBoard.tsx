@@ -8,7 +8,7 @@ import { applyTaskEdit, makeMoveLog } from '@/lib/domain/activity'
 import { computeSlaStatus } from '@/lib/domain/sla'
 import { workingDaysBetween } from '@/lib/domain/workingDays'
 import { TH_HOLIDAYS } from '@/lib/domain/holidays'
-import { moveTaskAction, editTaskAction } from '@/app/actions/tasks'
+import { moveTaskAction, editTaskAction, deleteTaskAction } from '@/app/actions/tasks'
 import { TaskCard } from './TaskCard'
 import { TaskDetailDrawer } from './TaskDetailDrawer'
 
@@ -75,6 +75,13 @@ export function KanbanBoard({
     if (logs.length > 0) void editTaskAction(taskId, changes, task.updatedAt) // persist
   }
 
+  function handleDelete(taskId: string) {
+    if (!confirm('ลบงานนี้? การลบนี้ย้อนกลับไม่ได้')) return
+    setTasks((prev) => prev.filter((t) => t.id !== taskId))
+    setSelectedId(null)
+    void deleteTaskAction(taskId)
+  }
+
   return (
     <div className="flex gap-3 overflow-x-auto pb-2">
       {project.kanbanColumns.map((col) => (
@@ -107,6 +114,7 @@ export function KanbanBoard({
           users={users}
           logs={logsByTask[selected.id] ?? []}
           onSave={(changes) => handleSave(selected.id, changes)}
+          onDelete={() => handleDelete(selected.id)}
           onClose={() => setSelectedId(null)}
         />
       )}
