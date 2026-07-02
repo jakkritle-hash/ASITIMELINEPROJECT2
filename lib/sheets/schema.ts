@@ -37,6 +37,15 @@ export function parseTask(r: Record<string, string>): Task {
   }
 }
 
+export function parseLog(r: Record<string, string>): ActivityLogEntry {
+  return {
+    id: r.id, timestamp: r.timestamp, actorId: r.actorId,
+    entityType: (r.entityType as ActivityLogEntry['entityType']) || 'task', entityId: r.entityId,
+    action: (r.action as ActivityLogEntry['action']) || 'update', field: r.field || '',
+    oldValue: r.oldValue || '', newValue: r.newValue || '',
+  }
+}
+
 export function serializeUser(u: User): Record<string, string> {
   return { ...u, active: String(u.active) }
 }

@@ -71,7 +71,8 @@ export async function createTaskAction(projectId: string, input: NewTaskInput): 
   const now = new Date().toISOString()
   const projectTasks = tasks.filter((t) => t.projectId === projectId)
   const maxOrder = projectTasks.reduce((m, t) => Math.max(m, t.order), -1)
-  const firstColumn = project.kanbanColumns[0] || 'To Do'
+  // งานใหม่เริ่มที่ 'To Do' ถ้ามี (ไม่ใช่ Pending) ไม่งั้นคอลัมน์แรก
+  const firstColumn = project.kanbanColumns.includes('To Do') ? 'To Do' : project.kanbanColumns[0] || 'To Do'
 
   const task: Task = {
     id: `k${tasks.length + 1}-${Date.now()}`,

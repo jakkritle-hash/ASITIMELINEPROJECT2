@@ -93,6 +93,9 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
                     <Link href={`/projects/${p.id}`} className="truncate text-sm font-semibold text-gray-800 hover:text-blue-600 hover:underline">
                       {p.name}
                     </Link>
+                    <span className="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-500" title="วันทำการรวมของโปรเจกต์">
+                      {p.workingDays}d
+                    </span>
                     <span className="ml-auto">
                       <AvatarGroup users={p.members} size={18} />
                     </span>
@@ -124,6 +127,7 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
                         <div className="flex shrink-0 items-center gap-2 bg-white py-1.5 pr-3" style={{ width: LABEL_W, paddingLeft: 38 }}>
                           <Avatar user={t.assignee} size={16} />
                           <span className="truncate text-xs text-gray-600">{t.title}</span>
+                          <span className="shrink-0 text-[10px] text-gray-400" title="วันทำการของงานนี้">· {t.workingDays}d</span>
                         </div>
                         <div className="relative" style={{ width: timelineW, height: 26 }}>
                           {todayLeft !== null && (

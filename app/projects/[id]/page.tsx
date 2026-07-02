@@ -12,7 +12,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   const { id } = await params
   const data = await getProjectData(id)
   if (!data) notFound()
-  const { project, users } = data
+  const { project, users, logs } = data
   const meta = STATUS_META[project.status]
 
   return (
@@ -40,7 +40,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
 
       {/* key = ชุด id ของ task: remount เมื่อมีการเพิ่ม/ลบงาน (จาก server revalidate)
           แต่การ move/edit (id เดิม) ไม่ remount จึงคง optimistic state ไว้ */}
-      <KanbanBoard key={project.tasks.map((t) => t.id).join(',')} project={project} users={users} />
+      <KanbanBoard key={project.tasks.map((t) => t.id).join(',')} project={project} users={users} initialLogs={logs} />
     </main>
   )
 }

@@ -1,13 +1,17 @@
 'use server'
 
-import { revalidatePath, revalidateTag } from 'next/cache'
-import type { Role } from '@/lib/domain/types'
+import { revalidatePath } from 'next/cache'
+import type { Role, User } from '@/lib/domain/types'
 import { getTab, updateRowById, appendRow, invalidateSheetCache } from '@/lib/sheets/repository'
 import { parseUser, parseTeam, serializeUser, serializeTeam, TAB_HEADERS } from '@/lib/sheets/schema'
 import { updateUserRole, toggleUserActive, addTeamMember, removeTeamMember, setTeamLead } from '@/lib/domain/adminOps'
 import { canManageMembers } from '@/lib/domain/permissions'
+import { isAllowedEmail } from '@/lib/auth/policy'
 import { getCurrentUser } from '@/lib/auth/session'
 import { sheetsConfigured } from '@/lib/data/dashboard'
+
+const ALLOWED_DOMAIN = process.env.ALLOWED_DOMAIN || 'planbmedia.co.th'
+const PALETTE = ['#4f7cff', '#22b07d', '#ef5da8', '#8a63d2', '#f5a623', '#e5484d', '#0ea5e9', '#14b8a6']
 
 const U_HEADER = TAB_HEADERS.Users as unknown as string[]
 const T_HEADER = TAB_HEADERS.Teams as unknown as string[]
@@ -21,6 +25,33 @@ async function requireAdmin(): Promise<{ ok: true } | { ok: false; error: string
   const user = await getCurrentUser()
   if (!user) return { ok: false, error: 'unauthenticated' }
   if (!canManageMembers(user)) return { ok: false, error: 'forbidden' }
+  return { ok: true }
+}
+
+/** สร้างสมาชิกใหม่ด้วยตนเอง (Admin) — ตรวจโดเมน + กันอีเมลซ้ำ
+ *  หมายเหตุ: ผู้ใช้ที่ล็อกอิน Google @planbmedia.co.th จะถูกเพิ่มอัตโนมัติอยู่แล้ว (provisionUser) */
+export async function createMemberAction(input: { email: string; name: string; role: Role }): Promise<ActionResult> {
+  if (!sheetsConfigured()) return { ok: true }
+  const gate = await requireAdmin()
+  if (!gate.ok) return gate
+  const email = input.email.trim().toLowerCase()
+  if (!isAllowedEmail(email, ALLOWED_DOMAIN)) return { ok: false, error: `ต้องเป็นอีเมล @${ALLOWED_DOMAIN}` }
+
+  const users = (await getTab('Users')).map(parseUser)
+  if (users.some((u) => u.email.toLowerCase() === email)) return { ok: false, error: 'มีอีเมลนี้อยู่แล้ว' }
+
+  const user: User = {
+    id: `u${users.length + 1}-${Date.now()}`,
+    email,
+    name: input.name.trim() || email.split('@')[0],
+    role: input.role,
+    avatarColor: PALETTE[users.length % PALETTE.length],
+    active: true,
+    createdAt: new Date().toISOString(),
+  }
+  await appendRow('Users', serializeUser(user), U_HEADER)
+  revalidatePath('/admin/members')
+  invalidateSheetCache()
   return { ok: true }
 }
 

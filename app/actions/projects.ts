@@ -8,7 +8,7 @@ import { getCurrentUser } from '@/lib/auth/session'
 import { sheetsConfigured } from '@/lib/data/dashboard'
 
 const P_HEADER = TAB_HEADERS.Projects as unknown as string[]
-const DEFAULT_COLUMNS = ['To Do', 'In Progress', 'Review', 'Done']
+const DEFAULT_COLUMNS = ['Pending', 'To Do', 'In Progress', 'Review', 'Done']
 
 export interface NewProjectInput {
   name: string

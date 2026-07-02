@@ -1,5 +1,7 @@
 import type { User, Project, Task, SlaStatus } from '@/lib/domain/types'
 import { computeSlaStatus } from '@/lib/domain/sla'
+import { workingDaysBetween } from '@/lib/domain/workingDays'
+import { TH_HOLIDAYS } from '@/lib/domain/holidays'
 import { getTabCached } from '@/lib/sheets/repository'
 import { parseUser, parseProject, parseTask } from '@/lib/sheets/schema'
 import { FIXTURE_USERS, FIXTURE_PROJECTS, FIXTURE_TASKS } from './fixtures'
@@ -27,14 +29,17 @@ const AT_RISK_DAYS = 2
 
 export interface EnrichedTask extends Task {
   assignee?: User
+  workingDays: number
 }
 export interface EnrichedProject extends Project {
   members: User[]
   tasks: EnrichedTask[]
+  workingDays: number
 }
 export interface DashboardData {
   projects: EnrichedProject[]
   usingFixtures: boolean
+  totalWorkingDays: number
 }
 
 /** ความรุนแรงของสถานะ เพื่อหา "แย่สุด" ของโปรเจกต์ */
@@ -55,13 +60,17 @@ function enrich(users: User[], projects: Project[], tasks: Task[], now: Date): E
       .map((t) => {
         const isDone = t.columnStatus.toLowerCase() === 'done'
         const slaStatus = computeSlaStatus({ dueDate: t.dueDate, isDone, now, tz: TZ, atRiskDays: AT_RISK_DAYS })
-        return { ...t, slaStatus, assignee: usersById.get(t.assigneeId) }
+        return { ...t, slaStatus, assignee: usersById.get(t.assigneeId), workingDays: workingDaysBetween(t.startDate, t.dueDate, TH_HOLIDAYS) }
       })
+    // ทำให้ทุกโปรเจกต์มีคอลัมน์ 'Pending' นำหน้า (โปรเจกต์เดิมที่ยังไม่มี)
+    const kanbanColumns = p.kanbanColumns.includes('Pending') ? p.kanbanColumns : ['Pending', ...p.kanbanColumns]
     return {
       ...p,
+      kanbanColumns,
       members: p.memberIds.map((id) => usersById.get(id)).filter((u): u is User => !!u),
       tasks: projTasks,
       status: worstStatus(projTasks.map((t) => t.slaStatus)),
+      workingDays: workingDaysBetween(p.startDate, p.dueDate, TH_HOLIDAYS),
     }
   })
 }
@@ -69,5 +78,7 @@ function enrich(users: User[], projects: Project[], tasks: Task[], now: Date): E
 /** ดึงข้อมูล dashboard — จาก Sheets ถ้าตั้งค่าแล้ว ไม่งั้น fixtures */
 export async function getDashboardData(now: Date = new Date()): Promise<DashboardData> {
   const { users, projects, tasks } = await loadRaw()
-  return { projects: enrich(users, projects, tasks, now), usingFixtures: !sheetsConfigured() }
+  const enriched = enrich(users, projects, tasks, now)
+  const totalWorkingDays = enriched.reduce((sum, p) => sum + p.workingDays, 0)
+  return { projects: enriched, usingFixtures: !sheetsConfigured(), totalWorkingDays }
 }

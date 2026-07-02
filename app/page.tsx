@@ -17,6 +17,8 @@ export default async function DashboardPage() {
           <h1 className="text-lg font-semibold text-gray-900 sm:text-xl">Dashboard</h1>
           <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
             <span>ทั้งหมด {data.projects.length} โปรเจกต์</span>
+            <span className="text-gray-400">·</span>
+            <span title="วันทำการรวมทุกโปรเจกต์ (ตัดเสาร์-อาทิตย์ + วันหยุดไทย)">รวม {data.totalWorkingDays} วันทำการ</span>
             {overdue > 0 && <span className="text-red-500">🔴 {overdue} เกินกำหนด</span>}
             {atRisk > 0 && <span className="text-amber-500">🟠 {atRisk} ใกล้ครบ</span>}
             {data.usingFixtures && <span className="rounded bg-amber-50 px-2 py-0.5 text-amber-600">โหมดตัวอย่าง</span>}

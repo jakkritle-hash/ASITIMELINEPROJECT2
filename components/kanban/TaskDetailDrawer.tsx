@@ -6,6 +6,19 @@ import type { User, ActivityLogEntry } from '@/lib/domain/types'
 import { STATUS_META } from '@/components/ui/StatusBadge'
 
 const ACTION_LABEL: Record<string, string> = { create: 'สร้าง', update: 'แก้ไข', move: 'ย้าย', delete: 'ลบ' }
+const FIELD_LABEL: Record<string, string> = {
+  title: 'ชื่องาน', description: 'รายละเอียด', assigneeId: 'ผู้รับผิดชอบ',
+  startDate: 'วันเริ่ม', dueDate: 'วันครบกำหนด', columnStatus: 'สถานะ',
+}
+
+function fmtTime(iso: string): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return iso
+  return new Intl.DateTimeFormat('th-TH', {
+    timeZone: 'Asia/Bangkok', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+  }).format(d)
+}
 
 export function TaskDetailDrawer({
   task,
@@ -79,11 +92,13 @@ export function TaskDetailDrawer({
             <ul className="space-y-2">
               {logs.map((l) => (
                 <li key={l.id} className="border-l-2 border-gray-200 pl-3 text-xs text-gray-600">
-                  <b>{userName(l.actorId)}</b> {ACTION_LABEL[l.action] ?? l.action} <span className="text-gray-400">{l.field}</span>
-                  {l.action !== 'create' && (
+                  <b>{userName(l.actorId)}</b> {ACTION_LABEL[l.action] ?? l.action}{' '}
+                  <span className="text-gray-500">{FIELD_LABEL[l.field] ?? l.field}</span>
+                  {l.action === 'update' && (
                     <span className="text-gray-400"> : {l.oldValue || '—'} → {l.newValue || '—'}</span>
                   )}
-                  <div className="text-[10px] text-gray-400">{l.timestamp}</div>
+                  {l.action === 'move' && <span className="text-gray-400"> : {l.oldValue} → {l.newValue}</span>}
+                  <div className="text-[10px] text-gray-400">{fmtTime(l.timestamp)}</div>
                 </li>
               ))}
             </ul>

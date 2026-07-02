@@ -3,9 +3,11 @@
 import { useState } from 'react'
 import type { EnrichedProject, EnrichedTask } from '@/lib/data/dashboard'
 import type { User, ActivityLogEntry } from '@/lib/domain/types'
-import { groupByColumn, moveTask } from '@/lib/domain/kanban'
+import { groupByColumn } from '@/lib/domain/kanban'
 import { applyTaskEdit, makeMoveLog } from '@/lib/domain/activity'
 import { computeSlaStatus } from '@/lib/domain/sla'
+import { workingDaysBetween } from '@/lib/domain/workingDays'
+import { TH_HOLIDAYS } from '@/lib/domain/holidays'
 import { moveTaskAction, editTaskAction } from '@/app/actions/tasks'
 import { TaskCard } from './TaskCard'
 import { TaskDetailDrawer } from './TaskDetailDrawer'
@@ -20,9 +22,23 @@ function recomputeSla(task: EnrichedTask): EnrichedTask {
   return { ...task, slaStatus: computeSlaStatus({ dueDate: task.dueDate, isDone, now: new Date(), tz: TZ, atRiskDays: AT_RISK_DAYS }) }
 }
 
-export function KanbanBoard({ project, users }: { project: EnrichedProject; users: User[] }) {
+function groupLogs(logs: ActivityLogEntry[]): Record<string, ActivityLogEntry[]> {
+  const g: Record<string, ActivityLogEntry[]> = {}
+  for (const l of logs) (g[l.entityId] ??= []).push(l)
+  return g
+}
+
+export function KanbanBoard({
+  project,
+  users,
+  initialLogs = [],
+}: {
+  project: EnrichedProject
+  users: User[]
+  initialLogs?: ActivityLogEntry[]
+}) {
   const [tasks, setTasks] = useState<EnrichedTask[]>(project.tasks)
-  const [logsByTask, setLogsByTask] = useState<Record<string, ActivityLogEntry[]>>({})
+  const [logsByTask, setLogsByTask] = useState<Record<string, ActivityLogEntry[]>>(() => groupLogs(initialLogs))
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const grouped = groupByColumn(tasks, project.kanbanColumns) as Record<string, EnrichedTask[]>
@@ -38,7 +54,8 @@ export function KanbanBoard({ project, users }: { project: EnrichedProject; user
     const task = tasks.find((t) => t.id === taskId)
     if (!task || task.columnStatus === toColumn) return
     const log = makeMoveLog(task, toColumn, CURRENT_USER, new Date().toISOString())
-    const moved = moveTask(tasks, taskId, toColumn).map((t) => (t.id === taskId ? recomputeSla({ ...t, columnStatus: toColumn }) : t))
+    // map บน enriched state โดยตรง (ไม่ผ่าน moveTask ที่คืน type Task[] ทำให้เสีย workingDays)
+    const moved = tasks.map((t) => (t.id === taskId ? recomputeSla({ ...t, columnStatus: toColumn }) : t))
     setTasks(moved)
     addLogs(taskId, [log])
     void moveTaskAction(taskId, toColumn) // persist (no-op ถ้ายังไม่ต่อ Sheet)
@@ -48,7 +65,11 @@ export function KanbanBoard({ project, users }: { project: EnrichedProject; user
     const task = tasks.find((t) => t.id === taskId)
     if (!task) return
     const { task: edited, logs } = applyTaskEdit(task, changes, CURRENT_USER, new Date().toISOString())
-    const withDerived = recomputeSla({ ...edited, assignee: usersById.get(edited.assigneeId) })
+    const withDerived = recomputeSla({
+      ...edited,
+      assignee: usersById.get(edited.assigneeId),
+      workingDays: workingDaysBetween(edited.startDate, edited.dueDate, TH_HOLIDAYS),
+    })
     setTasks((prev) => prev.map((t) => (t.id === taskId ? withDerived : t)))
     addLogs(taskId, logs)
     if (logs.length > 0) void editTaskAction(taskId, changes, task.updatedAt) // persist
