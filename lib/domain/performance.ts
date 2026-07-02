@@ -21,11 +21,29 @@ export interface MemberStats {
   workingDays: number
   completion: number
   byStatus: Record<SlaStatus, number>
+  score: number
+  /** อันดับ (1 = แชมป์) แบบ competition ranking: คะแนนเท่ากันได้อันดับเท่ากัน */
+  rank: number
+}
+
+/**
+ * คะแนนจัดอันดับผลงาน — นิยาม "แชมป์" ของทีม
+ *
+ * น้ำหนัก (ปรับได้ที่นี่ที่เดียว):
+ *  - งานที่ส่งสำเร็จ (output ที่ปิดจบจริง)   ×10  ← ให้ความสำคัญสูงสุด
+ *  - อัตราส่งสำเร็จ % (ความน่าเชื่อถือ)      ×0.5
+ *  - วันทำการที่ลงแรงไป (ความทุ่มเท)          ×1
+ *  - งานเลยกำหนด (penalty)                    ×-8
+ *
+ * ตรรกะ: "รับงานเยอะ" ไม่ใช่แชมป์ — "ปิดงานได้จริง + ตรงเวลา" ต่างหากคือแชมป์
+ */
+export function rankScore(s: Pick<MemberStats, 'taskDone' | 'completion' | 'workingDays' | 'byStatus'>): number {
+  return Math.round(s.taskDone * 10 + s.completion * 0.5 + s.workingDays * 1 - s.byStatus.overdue * 8)
 }
 
 /** สรุปผลงานรายบุคคลจากงานที่รับ (assignee) + โปรเจกต์ที่เกี่ยวข้อง */
 export function computePerformance(users: User[], tasks: PerfTask[], projects: PerfProject[]): MemberStats[] {
-  return users
+  const stats = users
     .map((u): MemberStats => {
       const mine = tasks.filter((t) => t.assigneeId === u.id)
       const projIds = new Set<string>()
@@ -39,6 +57,8 @@ export function computePerformance(users: User[], tasks: PerfTask[], projects: P
       })
       const taskDone = mine.filter((t) => t.columnStatus.toLowerCase() === 'done').length
       const workingDays = mine.reduce((s, t) => s + t.workingDays, 0)
+      const completion = mine.length ? Math.round((taskDone / mine.length) * 100) : 0
+      const base = { taskDone, completion, workingDays, byStatus }
       return {
         user: u,
         projectCount: projIds.size,
@@ -46,9 +66,23 @@ export function computePerformance(users: User[], tasks: PerfTask[], projects: P
         taskTotal: mine.length,
         taskDone,
         workingDays,
-        completion: mine.length ? Math.round((taskDone / mine.length) * 100) : 0,
+        completion,
         byStatus,
+        score: rankScore(base),
+        rank: 0, // กำหนดหลังเรียง
       }
     })
-    .sort((a, b) => b.taskTotal - a.taskTotal)
+    .sort((a, b) => b.score - a.score || b.taskDone - a.taskDone || b.taskTotal - a.taskTotal)
+
+  // competition ranking: คะแนนเท่ากัน = อันดับเท่ากัน, อันดับถัดไปข้ามตามจำนวนที่เสมอ
+  let lastScore: number | null = null
+  let lastRank = 0
+  stats.forEach((s, i) => {
+    if (s.score !== lastScore) {
+      lastRank = i + 1
+      lastScore = s.score
+    }
+    s.rank = lastRank
+  })
+  return stats
 }

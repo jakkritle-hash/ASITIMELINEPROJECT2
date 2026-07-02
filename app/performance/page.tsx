@@ -4,6 +4,13 @@ import { STATUS_META } from '@/components/ui/StatusBadge'
 
 export const dynamic = 'force-dynamic'
 
+/** เหรียญตามอันดับ — แชมป์ 3 อันดับแรกได้ 🏆🥈🥉 ที่เหลือเป็นเลขอันดับ */
+const MEDALS: Record<number, { icon: string; label: string; ring: string; badge: string }> = {
+  1: { icon: '🏆', label: 'Champion', ring: 'ring-2 ring-amber-400', badge: 'bg-gradient-to-br from-amber-400 to-yellow-500 text-white' },
+  2: { icon: '🥈', label: 'Runner-up', ring: 'ring-1 ring-slate-300', badge: 'bg-gradient-to-br from-slate-300 to-slate-400 text-white' },
+  3: { icon: '🥉', label: '3rd', ring: 'ring-1 ring-orange-300', badge: 'bg-gradient-to-br from-orange-300 to-amber-600 text-white' },
+}
+
 export default async function PerformancePage() {
   const { stats, projectNames } = await getPerformance()
 
@@ -11,21 +18,46 @@ export default async function PerformancePage() {
     <main className="w-full px-4 py-6 sm:px-6 lg:px-8">
       <header className="mb-5">
         <h1 className="text-lg font-semibold text-gray-900 sm:text-xl">Individual Performance</h1>
-        <p className="text-xs text-gray-500">สรุปผลงานรายบุคคลจากงานที่รับผิดชอบ (รวมทุกโปรเจกต์)</p>
+        <p className="text-xs text-gray-500">
+          จัดอันดับผลงานรายบุคคล 🏆 — คะแนน = งานที่ส่งสำเร็จ ×10 + อัตราสำเร็จ% ×0.5 + วันทำการ − งานเลยกำหนด ×8
+        </p>
       </header>
 
       {stats.length === 0 ? (
         <p className="text-sm text-gray-400">ยังไม่มีข้อมูล</p>
       ) : (
         <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(320px,1fr))]">
-          {stats.map((s) => (
-            <div key={s.user.id} className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
+          {stats.map((s) => {
+            const medal = MEDALS[s.rank]
+            return (
+            <div
+              key={s.user.id}
+              className={`relative rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100 ${medal?.ring ?? ''}`}
+            >
+              {/* Rank badge (มุมขวาบน) */}
+              <div className="absolute right-3 top-3 flex items-center gap-1.5">
+                {medal && <span className="text-lg leading-none" title={medal.label}>{medal.icon}</span>}
+                <span
+                  className={`flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-[11px] font-bold ${medal?.badge ?? 'bg-gray-100 text-gray-500'}`}
+                  title={`อันดับ ${s.rank}`}
+                >
+                  #{s.rank}
+                </span>
+              </div>
+
               {/* Header */}
-              <div className="mb-4 flex items-center gap-3">
+              <div className="mb-4 flex items-center gap-3 pr-16">
                 <Avatar user={s.user} size={40} />
                 <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold text-gray-900">{s.user.name}</div>
-                  <div className="text-[11px] text-gray-400">{s.user.role} · {s.user.email}</div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="truncate text-sm font-semibold text-gray-900">{s.user.name}</span>
+                    {s.rank === 1 && (
+                      <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-700">
+                        Champion
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-gray-400">{s.user.role} · <span className="font-medium text-gray-500">score {s.score}</span></div>
                 </div>
               </div>
 
@@ -78,7 +110,8 @@ export default async function PerformancePage() {
                 </div>
               )}
             </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </main>
