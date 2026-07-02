@@ -88,9 +88,9 @@ export function TaskDetailDrawer({
             <button
               onClick={onDelete}
               className="rounded-lg border border-red-200 px-3 py-2 text-sm text-red-600 transition hover:bg-red-50"
-              title="ลบงานนี้"
+              title="Delete this task"
             >
-              🗑 ลบ
+              🗑 Delete
             </button>
           </div>
         </div>

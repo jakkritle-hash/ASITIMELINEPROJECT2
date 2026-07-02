@@ -19,20 +19,20 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   return (
     <main className="w-full px-4 py-6 sm:px-6 lg:px-8">
       <Link href="/" className="text-xs text-blue-600 hover:underline">
-        ← กลับ Dashboard
+        ← BACK
       </Link>
       <header className="mb-4 mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-lg font-semibold text-gray-900 sm:text-xl">{project.name}</h1>
             {project.complete ? (
-              <span className="rounded bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-700">✅ เสร็จแล้ว</span>
+              <span className="rounded bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-700">✅ Completed</span>
             ) : (
               <span className="rounded px-2 py-0.5 text-[11px]" style={{ backgroundColor: meta.bg, color: meta.fg }}>
                 {meta.symbol} {meta.label}
               </span>
             )}
-            {project.archived && <span className="rounded bg-gray-100 px-2 py-0.5 text-[11px] text-gray-500">📦 เก็บถาวร</span>}
+            {project.archived && <span className="rounded bg-green-50 px-2 py-0.5 text-[11px] text-green-600">✅ Approved</span>}
           </div>
           <div className="mt-1 flex items-center gap-2">
             <div className="h-2 w-40 overflow-hidden rounded-full bg-gray-200">

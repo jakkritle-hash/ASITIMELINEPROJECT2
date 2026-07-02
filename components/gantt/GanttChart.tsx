@@ -51,7 +51,7 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
     <div className="rounded-xl border border-gray-200 bg-white">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 p-3">
         <div className="flex items-center gap-3">
-          <span className="text-xs text-gray-500">Timeline รวมทุกโปรเจกต์</span>
+          <span className="text-xs font-medium text-gray-600">Project Timeline</span>
           {archivedCount > 0 && (
             <button
               onClick={() => setShowArchived((v) => !v)}
@@ -60,7 +60,7 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
                 (showArchived ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200')
               }
             >
-              {showArchived ? 'ซ่อนที่เก็บถาวร' : `📦 ที่เก็บถาวร (${archivedCount})`}
+              {showArchived ? 'Hide Approved' : `✅ Approved (${archivedCount})`}
             </button>
           )}
         </div>
@@ -113,8 +113,8 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
                       {p.workingDays}d
                     </span>
                     {p.complete ? (
-                      <span className="shrink-0 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700" title="เสร็จครบทุกงาน">
-                        ✅ เสร็จ
+                      <span className="shrink-0 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700" title="All tasks done">
+                        ✅ Done
                       </span>
                     ) : (
                       <span className="flex shrink-0 items-center gap-1" title={`ความคืบหน้า ${p.progress}%`}>
@@ -124,7 +124,7 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
                         <span className="text-[10px] text-gray-500">{p.progress}%</span>
                       </span>
                     )}
-                    {p.archived && <span className="shrink-0 text-[10px] text-gray-400" title="เก็บถาวรแล้ว">📦</span>}
+                    {p.archived && <span className="shrink-0 text-[10px] text-green-500" title="Approved">✅</span>}
                     <span className="ml-auto">
                       <AvatarGroup users={p.members} size={18} />
                     </span>

@@ -26,7 +26,7 @@ export interface HeaderSegment {
   widthPct: number
 }
 
-const TH_MONTHS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.']
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 /** ตำแหน่ง % ของวันหนึ่งเทียบช่วงรวม (clamp 0–100) */
 function pointPct(date: Date, range: DateRange): number {
@@ -67,7 +67,7 @@ export function monthSegments(range: DateRange): HeaderSegment[] {
   return buildSegments(
     eachMonthOfInterval({ start: s, end: e }).map((d) => startOfMonth(d)),
     (d) => addMonths(d, 1),
-    (d) => `${TH_MONTHS[d.getMonth()]} ${d.getFullYear()}`,
+    (d) => `${MONTHS[d.getMonth()]} ${d.getFullYear()}`,
     range,
   )
 }

@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Project Tracker",
+  title: "ASI Project Tracker",
   description: "Dashboard ติดตามงานของทีม",
 };
 

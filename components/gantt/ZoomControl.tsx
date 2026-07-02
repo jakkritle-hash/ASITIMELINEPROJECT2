@@ -3,17 +3,17 @@
 import { ZOOM_LEVELS, type ZoomLevel } from '@/lib/domain/timeLayers'
 
 const LABELS: Record<ZoomLevel, string> = {
-  year: 'ปี',
-  quarter: 'ไตรมาส',
-  month: 'เดือน',
-  week: 'สัปดาห์',
-  day: 'วัน',
+  year: 'Year',
+  quarter: 'Quarter',
+  month: 'Month',
+  week: 'Week',
+  day: 'Day',
 }
 
 export function ZoomControl({ zoom, onChange }: { zoom: ZoomLevel; onChange: (z: ZoomLevel) => void }) {
   return (
     <div className="flex items-center gap-1 text-[11px]">
-      <span className="mr-1 text-gray-400">ซูม:</span>
+      <span className="mr-1 text-gray-400">Zoom:</span>
       {ZOOM_LEVELS.map((z) => (
         <button
           key={z}

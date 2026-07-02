@@ -31,14 +31,14 @@ export function ProjectActions({ projectId, archived }: { projectId: string; arc
         disabled={pending}
         className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 transition hover:bg-gray-100 disabled:opacity-50"
       >
-        {archived ? '↩ เลิกเก็บถาวร' : '📦 เก็บถาวร'}
+        {archived ? '↩ Re-Approve' : '✅ Project Approve'}
       </button>
       <button
         onClick={remove}
         disabled={pending}
         className="rounded-lg border border-red-200 px-3 py-2 text-sm text-red-600 transition hover:bg-red-50 disabled:opacity-50"
       >
-        🗑 ลบ
+        🗑 Delete
       </button>
     </div>
   )

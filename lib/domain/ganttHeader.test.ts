@@ -4,7 +4,7 @@ import { monthSegments, segmentsForLayer } from './ganttHeader'
 describe('monthSegments', () => {
   it('แบ่งช่วงเป็นเดือน พร้อม label และความกว้าง %', () => {
     const segs = monthSegments({ start: '2026-07-01', end: '2026-09-01' })
-    expect(segs.map((s) => s.label)).toEqual(['ก.ค. 2026', 'ส.ค. 2026', 'ก.ย. 2026'])
+    expect(segs.map((s) => s.label)).toEqual(['Jul 2026', 'Aug 2026', 'Sep 2026'])
     const totalWidth = segs.reduce((a, s) => a + s.widthPct, 0)
     expect(totalWidth).toBeCloseTo(100, 0)
   })
