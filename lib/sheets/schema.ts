@@ -3,7 +3,7 @@ import type { User, Team, Project, Task, ActivityLogEntry, Role, SlaStatus } fro
 export const TAB_HEADERS = {
   Users: ['id', 'email', 'name', 'role', 'avatarColor', 'active', 'createdAt'],
   Teams: ['id', 'name', 'memberIds', 'leadUserId', 'createdAt'],
-  Projects: ['id', 'name', 'teamId', 'memberIds', 'ownerUserId', 'startDate', 'dueDate', 'status', 'description', 'kanbanColumns', 'createdAt', 'updatedAt', 'archived'],
+  Projects: ['id', 'name', 'teamId', 'memberIds', 'ownerUserId', 'startDate', 'dueDate', 'status', 'description', 'kanbanColumns', 'createdAt', 'updatedAt', 'archived', 'departments'],
   Tasks: ['id', 'projectId', 'title', 'assigneeId', 'columnStatus', 'startDate', 'dueDate', 'slaStatus', 'editCount', 'description', 'order', 'createdAt', 'updatedAt'],
   ActivityLog: ['id', 'timestamp', 'actorId', 'entityType', 'entityId', 'action', 'field', 'oldValue', 'newValue'],
   Config: ['key', 'value'],
@@ -25,7 +25,7 @@ export function parseProject(r: Record<string, string>): Project {
   return {
     id: r.id, name: r.name, teamId: r.teamId, memberIds: csvToArr(r.memberIds), ownerUserId: r.ownerUserId,
     startDate: r.startDate, dueDate: r.dueDate, status: (r.status as SlaStatus) || 'on-track', description: r.description || '',
-    kanbanColumns: csvToArr(r.kanbanColumns), archived: toBool(r.archived), createdAt: r.createdAt, updatedAt: r.updatedAt,
+    kanbanColumns: csvToArr(r.kanbanColumns), departments: csvToArr(r.departments), archived: toBool(r.archived), createdAt: r.createdAt, updatedAt: r.updatedAt,
   }
 }
 export function parseTask(r: Record<string, string>): Task {
@@ -53,7 +53,7 @@ export function serializeTeam(t: Team): Record<string, string> {
   return { ...t, memberIds: arrToCsv(t.memberIds) }
 }
 export function serializeProject(p: Project): Record<string, string> {
-  return { ...p, memberIds: arrToCsv(p.memberIds), kanbanColumns: arrToCsv(p.kanbanColumns), archived: String(p.archived) }
+  return { ...p, memberIds: arrToCsv(p.memberIds), kanbanColumns: arrToCsv(p.kanbanColumns), departments: arrToCsv(p.departments), archived: String(p.archived) }
 }
 export function serializeTask(t: Task): Record<string, string> {
   return { ...t, editCount: String(t.editCount), order: String(t.order) }

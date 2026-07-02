@@ -4,6 +4,7 @@ import { getProjectData } from '@/lib/data/project'
 import { KanbanBoard } from '@/components/kanban/KanbanBoard'
 import { NewTaskDialog } from '@/components/kanban/NewTaskDialog'
 import { ProjectActions } from '@/components/project/ProjectActions'
+import { ProjectDepartments } from '@/components/project/ProjectDepartments'
 import { AvatarGroup } from '@/components/ui/Avatar'
 import { STATUS_META } from '@/components/ui/StatusBadge'
 
@@ -39,6 +40,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
               <div className="h-full rounded-full bg-blue-500" style={{ width: `${project.progress}%` }} />
             </div>
             <span className="text-xs text-gray-500">{project.progress}% · {project.startDate} → {project.dueDate} · {project.tasks.length} งาน</span>
+          </div>
+          <div className="mt-2">
+            <ProjectDepartments projectId={project.id} departments={project.departments} />
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">

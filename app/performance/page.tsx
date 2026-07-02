@@ -19,8 +19,9 @@ export default async function PerformancePage() {
       <header className="mb-5">
         <h1 className="text-lg font-semibold text-gray-900 sm:text-xl">Individual Performance</h1>
         <p className="text-xs text-gray-500">
-          จัดอันดับผลงานรายบุคคล 🏆 — คะแนน = งานที่ส่งสำเร็จ ×10 + อัตราสำเร็จ% ×0.5 + วันทำการ − งานเลยกำหนด ×8
+          จัดอันดับผลงานรายบุคคล 🏆 — คะแนน = <span className="font-semibold text-indigo-600">Dept load ×15</span> + งานส่งสำเร็จ ×10 + อัตราสำเร็จ% ×0.5 + วันทำการ − งานเลยกำหนด ×8
         </p>
+        <p className="text-[11px] text-gray-400">Dept load = ผลรวมจำนวน Department ของทุกโปรเจกต์ที่รับ (ทำงานข้ามแผนกมาก = คะแนนสูง)</p>
       </header>
 
       {stats.length === 0 ? (
@@ -62,7 +63,8 @@ export default async function PerformancePage() {
               </div>
 
               {/* Metric grid */}
-              <div className="mb-4 grid grid-cols-3 gap-2 text-center">
+              <div className="mb-4 grid grid-cols-4 gap-2 text-center">
+                <Metric label="Dept load" value={s.departmentLoad} highlight />
                 <Metric label="โปรเจกต์" value={s.projectCount} />
                 <Metric label="งานที่รับ" value={s.taskTotal} />
                 <Metric label="วันทำการ" value={s.workingDays} />
@@ -118,11 +120,11 @@ export default async function PerformancePage() {
   )
 }
 
-function Metric({ label, value }: { label: string; value: number }) {
+function Metric({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
   return (
-    <div className="rounded-lg bg-gray-50 py-2">
-      <div className="text-lg font-semibold text-gray-900">{value}</div>
-      <div className="text-[10px] text-gray-400">{label}</div>
+    <div className={`rounded-lg py-2 ${highlight ? 'bg-indigo-50 ring-1 ring-indigo-100' : 'bg-gray-50'}`}>
+      <div className={`text-lg font-semibold ${highlight ? 'text-indigo-600' : 'text-gray-900'}`}>{value}</div>
+      <div className={`text-[10px] ${highlight ? 'text-indigo-400' : 'text-gray-400'}`}>{label}</div>
     </div>
   )
 }

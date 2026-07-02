@@ -19,7 +19,7 @@ export async function getPerformance(): Promise<PerformanceData> {
       workingDays: t.workingDays,
     })),
   )
-  const projects = data.projects.map((p) => ({ id: p.id, memberIds: p.memberIds, ownerUserId: p.ownerUserId }))
+  const projects = data.projects.map((p) => ({ id: p.id, memberIds: p.memberIds, ownerUserId: p.ownerUserId, departments: p.departments }))
   const projectNames = Object.fromEntries(data.projects.map((p) => [p.id, p.name]))
   const stats = computePerformance(admin.users, tasks, projects).filter((s) => s.taskTotal > 0 || s.projectCount > 0)
   return { stats, projectNames }

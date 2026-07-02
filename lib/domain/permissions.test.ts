@@ -9,7 +9,7 @@ const member: User = { ...admin, id: 'u3', role: 'Member' }
 const project: Project = {
   id: 'p1', name: 'P', teamId: 't1', memberIds: ['u3'], ownerUserId: 'u3',
   startDate: '2026-07-01', dueDate: '2026-07-31', status: 'on-track',
-  description: '', kanbanColumns: ['To Do', 'Done'], createdAt: '', updatedAt: '',
+  description: '', kanbanColumns: ['To Do', 'Done'], departments: [], createdAt: '', updatedAt: '',
 }
 const task: Task = {
   id: 'k1', projectId: 'p1', title: 'T', assigneeId: 'u3', columnStatus: 'To Do',

@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import type { Team } from '@/lib/domain/types'
 import { createProjectAction } from '@/app/actions/projects'
+import { DepartmentPicker } from './DepartmentPicker'
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10)
@@ -17,6 +18,7 @@ export function NewProjectDialog({ teams }: { teams: Team[] }) {
   const [startDate, setStartDate] = useState(todayIso())
   const [dueDate, setDueDate] = useState('')
   const [description, setDescription] = useState('')
+  const [departments, setDepartments] = useState<string[]>([])
 
   function submit() {
     if (!name.trim() || !dueDate) {
@@ -25,7 +27,7 @@ export function NewProjectDialog({ teams }: { teams: Team[] }) {
     }
     setError('')
     startTransition(async () => {
-      const res = await createProjectAction({ name, teamId, startDate, dueDate, description })
+      const res = await createProjectAction({ name, teamId, startDate, dueDate, description, departments })
       if (!res.ok) {
         setError(res.error || 'สร้างไม่สำเร็จ')
         return
@@ -34,6 +36,7 @@ export function NewProjectDialog({ teams }: { teams: Team[] }) {
       setName('')
       setDueDate('')
       setDescription('')
+      setDepartments([])
       // revalidatePath ใน server action อัปเดตหน้าให้อยู่แล้ว — ไม่ต้อง router.refresh()
       // (การเรียก refresh ซ้อนใน transition ทำให้ RSC stream ถูก abort → "Connection closed")
     })
@@ -51,7 +54,7 @@ export function NewProjectDialog({ teams }: { teams: Team[] }) {
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/30" onClick={() => setOpen(false)} />
-          <div className="relative z-10 w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
+          <div className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-5 shadow-xl">
             <h2 className="mb-4 text-base font-semibold text-gray-900">สร้างโปรเจกต์ใหม่</h2>
             <div className="space-y-3">
               <Field label="ชื่อโปรเจกต์ *">
@@ -71,6 +74,9 @@ export function NewProjectDialog({ teams }: { teams: Team[] }) {
               </div>
               <Field label="รายละเอียด">
                 <textarea className="fld" rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
+              </Field>
+              <Field label={`Departments ที่ใช้โปรเจกต์นี้ (เลือกได้หลายแผนก)${departments.length ? ` · ${departments.length}` : ''}`}>
+                <DepartmentPicker value={departments} onChange={setDepartments} />
               </Field>
               {error && <p className="text-xs text-red-500">{error}</p>}
             </div>

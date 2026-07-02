@@ -14,9 +14,9 @@ const tasks: PerfTask[] = [
   task('u2', 'p1', 'Done', 'done', 4),
 ]
 const projects: PerfProject[] = [
-  { id: 'p1', memberIds: ['u1', 'u2'], ownerUserId: 'u1' },
-  { id: 'p2', memberIds: [], ownerUserId: 'u1' },
-  { id: 'p3', memberIds: ['u2'], ownerUserId: 'u2' }, // u2 เป็นสมาชิกแต่ไม่มี task
+  { id: 'p1', memberIds: ['u1', 'u2'], ownerUserId: 'u1', departments: ['A', 'B'] }, // 2 depts
+  { id: 'p2', memberIds: [], ownerUserId: 'u1', departments: ['C'] }, // 1 dept
+  { id: 'p3', memberIds: ['u2'], ownerUserId: 'u2', departments: ['D', 'E', 'F'] }, // 3 depts, u2 สมาชิกแต่ไม่มี task
 ]
 
 describe('computePerformance', () => {
@@ -32,15 +32,24 @@ describe('computePerformance', () => {
     expect(s2.rank).toBe(1)
     expect(s1.rank).toBe(2)
   })
-  it('rankScore: ให้ค่าน้ำหนัก done สูงและหัก overdue', () => {
-    // u1: done1×10 + 33×0.5 + 10 − overdue1×8 = 29
-    expect(s1.score).toBe(29)
-    // u2: done1×10 + 100×0.5 + 4 = 64
-    expect(s2.score).toBe(64)
-    // ทดสอบ pure fn ตรงๆ: overdue ทำให้คะแนนต่ำกว่า
-    const clean = rankScore({ taskDone: 2, completion: 100, workingDays: 5, byStatus: { 'on-track': 0, 'at-risk': 0, overdue: 0, done: 2 } })
-    const late = rankScore({ taskDone: 2, completion: 100, workingDays: 5, byStatus: { 'on-track': 0, 'at-risk': 0, overdue: 2, done: 2 } })
+  it('departmentLoad: รวมจำนวน dept ของทุกโปรเจกต์ที่เกี่ยวข้อง', () => {
+    // u1 เกี่ยวข้อง p1(2)+p2(1) = 3 ; u2 เกี่ยวข้อง p1(2)+p3(3) = 5
+    expect(s1.departmentLoad).toBe(3)
+    expect(s2.departmentLoad).toBe(5)
+  })
+  it('rankScore: department load เป็นน้ำหนักสูงสุด + หัก overdue', () => {
+    // u1: dept3×15 + done1×10 + 33×0.5 + 10 − overdue1×8 = 74
+    expect(s1.score).toBe(74)
+    // u2: dept5×15 + done1×10 + 100×0.5 + 4 = 139
+    expect(s2.score).toBe(139)
+    // pure fn: overdue ทำให้คะแนนต่ำกว่า
+    const clean = rankScore({ departmentLoad: 2, taskDone: 2, completion: 100, workingDays: 5, byStatus: { 'on-track': 0, 'at-risk': 0, overdue: 0, done: 2 } })
+    const late = rankScore({ departmentLoad: 2, taskDone: 2, completion: 100, workingDays: 5, byStatus: { 'on-track': 0, 'at-risk': 0, overdue: 2, done: 2 } })
     expect(clean).toBeGreaterThan(late)
+    // department load ถ่วงหนักกว่าจำนวนงานที่ปิด: +1 dept (×15) > +1 done (×10)
+    const moreDept = rankScore({ departmentLoad: 3, taskDone: 2, completion: 100, workingDays: 5, byStatus: { 'on-track': 0, 'at-risk': 0, overdue: 0, done: 2 } })
+    const moreDone = rankScore({ departmentLoad: 2, taskDone: 3, completion: 100, workingDays: 5, byStatus: { 'on-track': 0, 'at-risk': 0, overdue: 0, done: 3 } })
+    expect(moreDept).toBeGreaterThan(moreDone)
   })
   it('competition ranking: คะแนนเท่ากันได้อันดับเท่ากัน', () => {
     const tie = computePerformance(
