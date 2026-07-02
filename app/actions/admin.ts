@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import type { Role, User } from '@/lib/domain/types'
-import { getTab, updateRowById, appendRow, invalidateSheetCache } from '@/lib/sheets/repository'
+import { getTab, updateRowById, appendRow, deleteRowById, invalidateSheetCache } from '@/lib/sheets/repository'
 import { parseUser, parseTeam, serializeUser, serializeTeam, TAB_HEADERS } from '@/lib/sheets/schema'
 import { updateUserRole, toggleUserActive, addTeamMember, removeTeamMember, setTeamLead } from '@/lib/domain/adminOps'
 import { canManageMembers } from '@/lib/domain/permissions'
@@ -98,6 +98,16 @@ async function writeTeam(teamId: string, transform: (teams: ReturnType<typeof pa
   const updated = transform(teams).find((t) => t.id === teamId)
   if (!updated) return { ok: false, error: 'not found' }
   await updateRowById('Teams', teamId, serializeTeam(updated), T_HEADER)
+  revalidatePath('/admin/teams')
+  invalidateSheetCache()
+  return { ok: true }
+}
+
+export async function deleteTeamAction(teamId: string): Promise<ActionResult> {
+  if (!sheetsConfigured()) return { ok: true }
+  const gate = await requireAdmin()
+  if (!gate.ok) return gate
+  await deleteRowById('Teams', teamId)
   revalidatePath('/admin/teams')
   invalidateSheetCache()
   return { ok: true }

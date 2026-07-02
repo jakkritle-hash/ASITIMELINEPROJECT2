@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import type { User, Team } from '@/lib/domain/types'
 import { createTeam, addTeamMember, removeTeamMember, setTeamLead } from '@/lib/domain/adminOps'
-import { createTeamAction, addTeamMemberAction, removeTeamMemberAction, setTeamLeadAction } from '@/app/actions/admin'
+import { createTeamAction, deleteTeamAction, addTeamMemberAction, removeTeamMemberAction, setTeamLeadAction } from '@/app/actions/admin'
 import { Avatar } from '@/components/ui/Avatar'
 
 export function TeamsManager({ users, teams: initial }: { users: User[]; teams: Team[] }) {
@@ -19,6 +19,12 @@ export function TeamsManager({ users, teams: initial }: { users: User[]; teams: 
     void createTeamAction(name)
   }
 
+  function handleDeleteTeam(teamId: string, teamName: string) {
+    if (!confirm(`Delete team "${teamName}"? This cannot be undone.`)) return
+    setTeams((prev) => prev.filter((t) => t.id !== teamId))
+    void deleteTeamAction(teamId)
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
@@ -29,7 +35,7 @@ export function TeamsManager({ users, teams: initial }: { users: User[]; teams: 
           className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-blue-300"
         />
         <button onClick={handleCreate} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-          + สร้างทีม
+          + New Team
         </button>
       </div>
 
@@ -38,7 +44,16 @@ export function TeamsManager({ users, teams: initial }: { users: User[]; teams: 
         const nonMembers = users.filter((u) => !t.memberIds.includes(u.id))
         return (
           <div key={t.id} className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-100">
-            <h3 className="mb-3 text-sm font-semibold text-gray-800">{t.name}</h3>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-gray-800">{t.name}</h3>
+              <button
+                onClick={() => handleDeleteTeam(t.id, t.name)}
+                className="rounded-md border border-red-200 px-2 py-1 text-[11px] text-red-600 transition hover:bg-red-50"
+                title="Delete team"
+              >
+                🗑 Delete
+              </button>
+            </div>
             <div className="mb-3 flex flex-wrap gap-2">
               {t.memberIds.length === 0 && <span className="text-xs text-gray-400">ยังไม่มีสมาชิก</span>}
               {t.memberIds.map((id) => {
