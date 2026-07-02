@@ -76,13 +76,13 @@ export function KanbanBoard({
   }
 
   return (
-    <div className="grid gap-3 pb-2 [grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]">
+    <div className="flex gap-3 overflow-x-auto pb-2">
       {project.kanbanColumns.map((col) => (
         <div
           key={col}
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => handleDrop(e.dataTransfer.getData('text/plain'), col)}
-          className="flex min-h-[60vh] flex-col rounded-xl bg-gray-100 p-2"
+          className="flex min-h-[60vh] min-w-[180px] flex-1 flex-col rounded-xl bg-gray-100 p-2"
         >
           <div className="mb-2 flex items-center justify-between px-1 text-xs font-semibold text-gray-600">
             <span>{col}</span>
