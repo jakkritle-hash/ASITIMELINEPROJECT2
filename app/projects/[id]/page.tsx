@@ -16,7 +16,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   const meta = STATUS_META[project.status]
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+    <main className="w-full px-4 py-6 sm:px-6 lg:px-8">
       <Link href="/" className="text-xs text-blue-600 hover:underline">
         ← กลับ Dashboard
       </Link>

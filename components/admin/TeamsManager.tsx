@@ -33,6 +33,7 @@ export function TeamsManager({ users, teams: initial }: { users: User[]; teams: 
         </button>
       </div>
 
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {teams.map((t) => {
         const nonMembers = users.filter((u) => !t.memberIds.includes(u.id))
         return (
@@ -85,6 +86,7 @@ export function TeamsManager({ users, teams: initial }: { users: User[]; teams: 
           </div>
         )
       })}
+      </div>
     </div>
   )
 }

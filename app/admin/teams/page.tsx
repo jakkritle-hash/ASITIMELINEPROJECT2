@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 export default async function TeamsPage() {
   const { users, teams, usingFixtures } = await getAdminData()
   return (
-    <main className="mx-auto max-w-5xl p-6">
+    <main className="w-full px-4 py-6 sm:px-6 lg:px-8">
       <header className="mb-4 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">จัดการทีม</h1>

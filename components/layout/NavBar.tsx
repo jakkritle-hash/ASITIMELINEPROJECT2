@@ -14,7 +14,7 @@ export async function NavBar() {
   }
   return (
     <nav className="sticky top-0 z-30 border-b border-gray-200 bg-white/80 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center gap-1 px-4 py-2.5 text-sm sm:px-6">
+      <div className="flex items-center gap-1 px-4 py-2.5 text-sm sm:px-6 lg:px-8">
         <Link href="/" className="mr-3 shrink-0 font-semibold text-gray-900">🗂️ Project Tracker</Link>
         <div className="flex items-center gap-1 overflow-x-auto">
           <NavLink href="/">Dashboard</NavLink>

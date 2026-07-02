@@ -11,7 +11,7 @@ export default async function DashboardPage() {
   const atRisk = data.projects.filter((p) => p.status === 'at-risk').length
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+    <main className="w-full px-4 py-6 sm:px-6 lg:px-8">
       <header className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-lg font-semibold text-gray-900 sm:text-xl">Dashboard</h1>

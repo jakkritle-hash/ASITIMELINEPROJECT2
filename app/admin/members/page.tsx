@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 export default async function MembersPage() {
   const { users, usingFixtures } = await getAdminData()
   return (
-    <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
+    <main className="w-full px-4 py-6 sm:px-6 lg:px-8">
       <header className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-lg font-semibold text-gray-900 sm:text-xl">จัดการสมาชิก</h1>
