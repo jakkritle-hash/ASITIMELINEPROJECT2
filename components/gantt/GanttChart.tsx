@@ -56,7 +56,7 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
           {/* Header layers */}
           {layers.map((layer) => (
             <div key={layer} className="flex border-b border-gray-100">
-              <div className="shrink-0 bg-white" style={{ width: LABEL_W }} />
+              <div className="sticky left-0 z-20 shrink-0 border-r border-gray-100 bg-white" style={{ width: LABEL_W }} />
               <div className="relative" style={{ width: timelineW, height: 22 }}>
                 {segmentsForLayer(layer, range).map((seg, i) => {
                   const pxWidth = (seg.widthPct / 100) * timelineW
@@ -83,7 +83,7 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
               <div key={p.id}>
                 {/* Project row */}
                 <div className="flex items-center border-b border-gray-50">
-                  <div className="flex shrink-0 items-center gap-2 bg-white px-3 py-2" style={{ width: LABEL_W }}>
+                  <div className="sticky left-0 z-20 flex shrink-0 items-center gap-2 border-r border-gray-100 bg-white px-3 py-2" style={{ width: LABEL_W }}>
                     <button
                       onClick={() => toggle(p.id)}
                       className="flex h-4 w-4 items-center justify-center rounded bg-gray-100 text-xs font-bold text-gray-600 hover:bg-gray-200"
@@ -124,7 +124,7 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
                     const meta = STATUS_META[t.slaStatus]
                     return (
                       <div key={t.id} className="flex items-center border-b border-gray-50">
-                        <div className="flex shrink-0 items-center gap-2 bg-white py-1.5 pr-3" style={{ width: LABEL_W, paddingLeft: 38 }}>
+                        <div className="sticky left-0 z-20 flex shrink-0 items-center gap-2 border-r border-gray-100 bg-white py-1.5 pr-3" style={{ width: LABEL_W, paddingLeft: 38 }}>
                           <Avatar user={t.assignee} size={16} />
                           <span className="truncate text-xs text-gray-600">{t.title}</span>
                           <span className="shrink-0 text-[10px] text-gray-400" title="วันทำการของงานนี้">· {t.workingDays}d</span>
