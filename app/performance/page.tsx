@@ -16,7 +16,7 @@ export default async function PerformancePage() {
 
   return (
     <main className="w-full px-4 py-6 sm:px-6 lg:px-8">
-      <header className="mb-5">
+      <header className="animate-rise mb-5">
         <h1 className="text-lg font-semibold text-gray-900 sm:text-xl">Individual Performance</h1>
         <p className="text-xs text-gray-500">
           จัดอันดับผลงานรายบุคคล 🏆 — คิดคะแนน<span className="font-semibold text-indigo-600">แยกทีละโปรเจกต์แล้วรวมกัน</span>
@@ -35,7 +35,7 @@ export default async function PerformancePage() {
             return (
             <div
               key={s.user.id}
-              className={`relative rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100 ${medal?.ring ?? ''}`}
+              className={`relative rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100 transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10 ${medal?.ring ?? ''}`}
             >
               {/* Rank badge (มุมขวาบน) */}
               <div className="absolute right-3 top-3 flex items-center gap-1.5">
@@ -60,7 +60,7 @@ export default async function PerformancePage() {
                       </span>
                     )}
                   </div>
-                  <div className="text-[11px] text-gray-400">{s.user.role} · <span className="font-medium text-gray-500">score {s.score}</span></div>
+                  <div className="text-[11px] text-gray-400">{s.user.role} · score <span className="font-mono font-semibold text-indigo-600">{s.score}</span></div>
                 </div>
               </div>
 
@@ -75,8 +75,8 @@ export default async function PerformancePage() {
               {/* Completion */}
               <div className="mb-3">
                 <div className="mb-1 flex items-center justify-between text-[11px] text-gray-500">
-                  <span>ส่งงานสำเร็จ {s.taskDone}/{s.taskTotal}</span>
-                  <span className="font-medium text-gray-700">{s.completion}%</span>
+                  <span>ส่งงานสำเร็จ <span className="font-mono">{s.taskDone}/{s.taskTotal}</span></span>
+                  <span className="font-mono font-medium text-gray-700">{s.completion}%</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-gray-200">
                   <div className="h-full rounded-full bg-green-500" style={{ width: `${s.completion}%` }} />
@@ -120,7 +120,7 @@ export default async function PerformancePage() {
                           เลย {ps.overdue}
                         </span>
                       )}
-                      <span className="ml-auto shrink-0 font-semibold text-gray-700">{ps.score}</span>
+                      <span className="ml-auto shrink-0 font-mono font-semibold text-gray-700">{ps.score}</span>
                     </div>
                   ))}
                 </div>
@@ -137,7 +137,7 @@ export default async function PerformancePage() {
 function Metric({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
   return (
     <div className={`rounded-lg py-2 ${highlight ? 'bg-indigo-50 ring-1 ring-indigo-100' : 'bg-gray-50'}`}>
-      <div className={`text-lg font-semibold ${highlight ? 'text-indigo-600' : 'text-gray-900'}`}>{value}</div>
+      <div className={`font-mono text-lg font-semibold ${highlight ? 'text-indigo-600' : 'text-gray-900'}`}>{value}</div>
       <div className={`text-[10px] ${highlight ? 'text-indigo-400' : 'text-gray-400'}`}>{label}</div>
     </div>
   )

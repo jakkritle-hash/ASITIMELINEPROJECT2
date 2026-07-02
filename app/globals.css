@@ -1,26 +1,120 @@
 @import "tailwindcss";
 
+/* ============================================================
+   ASI Project Tracker — "OOH Media Ops Console"
+   ธีมสว่าง โครงตารางแบบสื่อนอกบ้าน (billboards/inventory grid)
+   ============================================================ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f4f6f9;
+  --foreground: #0f172a; /* slate-900 */
+
+  /* accent (indigo → blue) */
+  --accent: #4f46e5;
+  --accent-2: #2563eb;
+
+  /* neutral surfaces (slate-tinted, พรีเมียมกว่า gray กลางๆ) */
+  --surface: #ffffff;
+  --border: rgba(15, 23, 42, 0.08);
+
+  color-scheme: light;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* ---- พื้นหลังบรรยากาศ: ตาราง OOH + แสงเรืองด้านบน (PatternCraft) ---- */
 body {
-  background: var(--background);
+  background-color: var(--background);
+  background-image:
+    /* แสง indigo เรืองจากด้านบนกลาง ให้มิติ */
+    radial-gradient(120% 110% at 50% -10%, rgba(79, 70, 229, 0.12) 0%, rgba(79, 70, 229, 0) 42%),
+    /* เส้นตารางแนวตั้ง/แนวนอน สีสเลทจางๆ */
+    linear-gradient(to right, rgba(15, 23, 42, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.045) 1px, transparent 1px);
+  background-size: 100% 100%, 30px 30px, 30px 30px;
+  background-attachment: fixed;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), "IBM Plex Sans Thai", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ตัวเลขทุกที่ในคลาส font-mono จัดชิดแบบตาราง (instrument feel) */
+.font-mono {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* หัวข้อกระชับขึ้นเล็กน้อย */
+h1, h2, h3 {
+  letter-spacing: -0.015em;
+}
+
+/* ---- selection / focus / scrollbar ---- */
+::selection {
+  background: rgba(79, 70, 229, 0.18);
+  color: var(--foreground);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(15, 23, 42, 0.22) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.18);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 23, 42, 0.3);
+  background-clip: content-box;
+}
+
+/* ---- utilities ร่วม ---- */
+
+/* การ์ดยกลอยเหนือกริด: เงาซ้อนชั้น + ขอบเส้นผม + ยกตอน hover */
+.surface {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 8px 24px -12px rgba(15, 23, 42, 0.12);
+  transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+}
+.surface-hover:hover {
+  transform: translateY(-2px);
+  border-color: rgba(79, 70, 229, 0.28);
+  box-shadow:
+    0 2px 4px rgba(15, 23, 42, 0.05),
+    0 18px 40px -16px rgba(79, 70, 229, 0.28);
+}
+
+/* เข้าฉากตอนโหลด: ค่อยๆ ลอยขึ้น (ใช้กับ header/card) */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-rise {
+  animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise { animation: none; }
+  .surface, .surface-hover:hover { transition: none; transform: none; }
 }
