@@ -48,10 +48,13 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 p-3">
+    <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-100">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 bg-gradient-to-r from-gray-50/80 to-white p-3">
         <div className="flex items-center gap-3">
-          <span className="text-xs font-medium text-gray-600">Project Timeline</span>
+          <span className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+            <span className="h-4 w-1 rounded-full bg-gradient-to-b from-indigo-500 to-blue-600" />
+            Project Timeline
+          </span>
           {archivedCount > 0 && (
             <button
               onClick={() => setShowArchived((v) => !v)}
@@ -98,8 +101,8 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
             return (
               <div key={p.id}>
                 {/* Project row */}
-                <div className="flex items-center border-b border-gray-50">
-                  <div className="sticky left-0 z-20 flex shrink-0 items-center gap-2 border-r border-gray-100 bg-white px-3 py-2" style={{ width: LABEL_W }}>
+                <div className="group flex items-center border-b border-gray-50 transition-colors hover:bg-indigo-50/20">
+                  <div className="sticky left-0 z-20 flex shrink-0 items-center gap-2 border-r border-gray-100 bg-white px-3 py-2 shadow-[6px_0_12px_-10px_rgba(15,23,42,0.25)] transition-colors group-hover:bg-indigo-50/40" style={{ width: LABEL_W }}>
                     <button
                       onClick={() => toggle(p.id)}
                       className="flex h-4 w-4 items-center justify-center rounded bg-gray-100 text-xs font-bold text-gray-600 hover:bg-gray-200"
@@ -134,15 +137,22 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
                       <div className="absolute top-0 bottom-0 w-px bg-red-400/60" style={{ left: `${todayLeft}%` }} />
                     )}
                     <div
-                      className="absolute top-1/2 -translate-y-1/2 rounded-md"
+                      className="absolute top-1/2 -translate-y-1/2 overflow-hidden rounded-full shadow-sm"
                       style={{
                         left: `${pm.leftPct}%`,
                         width: `${pm.widthPct}%`,
                         height: 18,
-                        backgroundColor: pMeta.color + '33',
-                        border: `1px solid ${pMeta.color}`,
+                        backgroundColor: pMeta.color + '22',
+                        border: `1px solid ${pMeta.color}66`,
                       }}
-                    />
+                      title={`${p.progress}% · ${p.startDate} → ${p.dueDate}`}
+                    >
+                      {/* progress fill ในแท่ง */}
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${p.progress}%`, background: `linear-gradient(90deg, ${pMeta.color}cc, ${pMeta.color})` }}
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -152,8 +162,8 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
                     const tm = barMetrics(t.startDate, t.dueDate, range)
                     const meta = STATUS_META[t.slaStatus]
                     return (
-                      <div key={t.id} className="flex items-center border-b border-gray-50">
-                        <div className="sticky left-0 z-20 flex shrink-0 items-center gap-2 border-r border-gray-100 bg-white py-1.5 pr-3" style={{ width: LABEL_W, paddingLeft: 38 }}>
+                      <div key={t.id} className="group flex items-center border-b border-gray-50 transition-colors hover:bg-indigo-50/20">
+                        <div className="sticky left-0 z-20 flex shrink-0 items-center gap-2 border-r border-gray-100 bg-white py-1.5 pr-3 shadow-[6px_0_12px_-10px_rgba(15,23,42,0.25)] transition-colors group-hover:bg-indigo-50/40" style={{ width: LABEL_W, paddingLeft: 38 }}>
                           <Avatar user={t.assignee} size={16} />
                           <span className="truncate text-xs text-gray-600">{t.title}</span>
                           <span className="shrink-0 text-[10px] text-gray-400" title="วันทำการของงานนี้">· {t.workingDays}d</span>
@@ -163,8 +173,8 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
                             <div className="absolute top-0 bottom-0 w-px bg-red-400/60" style={{ left: `${todayLeft}%` }} />
                           )}
                           <div
-                            className="absolute top-1/2 flex -translate-y-1/2 items-center justify-end rounded pr-1 text-[9px] text-white"
-                            style={{ left: `${tm.leftPct}%`, width: `${tm.widthPct}%`, height: 15, backgroundColor: meta.color }}
+                            className="absolute top-1/2 flex -translate-y-1/2 items-center justify-end rounded-full pr-1.5 text-[9px] text-white shadow-sm"
+                            style={{ left: `${tm.leftPct}%`, width: `${tm.widthPct}%`, height: 15, background: `linear-gradient(90deg, ${meta.color}cc, ${meta.color})` }}
                             title={`${meta.label} · ครบ ${t.dueDate}`}
                           >
                             {meta.symbol}
@@ -179,12 +189,16 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-4 border-t border-gray-100 p-3 text-[10px] text-gray-500">
-        <span style={{ color: STATUS_META['on-track'].color }}>✓ On-track</span>
-        <span style={{ color: STATUS_META['at-risk'].fg }}>⚠ At-risk</span>
-        <span style={{ color: STATUS_META.overdue.color }}>✕ Overdue</span>
-        <span style={{ color: STATUS_META.done.fg }}>✔ Done</span>
-        <span className="text-red-400">▏เส้นแดง = วันนี้</span>
+      <div className="flex flex-wrap items-center gap-2 border-t border-gray-100 bg-gray-50/40 p-3 text-[10px]">
+        {(['on-track', 'at-risk', 'overdue', 'done'] as const).map((k) => (
+          <span key={k} className="inline-flex items-center gap-1.5 rounded-full bg-white px-2 py-1 text-gray-600 ring-1 ring-gray-100">
+            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: STATUS_META[k].color }} />
+            {STATUS_META[k].symbol} {STATUS_META[k].label}
+          </span>
+        ))}
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-2 py-1 text-gray-600 ring-1 ring-gray-100">
+          <span className="h-3 w-0.5 rounded-full bg-red-400" /> เส้นแดง = วันนี้
+        </span>
       </div>
     </div>
   )
