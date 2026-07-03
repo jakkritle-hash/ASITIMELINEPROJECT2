@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import type { Role } from '@/lib/domain/types'
 import { createMemberAction } from '@/app/actions/admin'
+import { Modal } from '@/components/ui/Modal'
 
 const ROLES: Role[] = ['Admin', 'Manager', 'Member']
 
@@ -42,10 +43,7 @@ export function NewMemberDialog() {
         <span className="text-base leading-none">+</span> เพิ่มสมาชิก
       </button>
 
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/30" onClick={() => setOpen(false)} />
-          <div className="relative z-10 w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
+      <Modal open={open} onClose={() => setOpen(false)}>
             <h2 className="mb-1 text-base font-semibold text-gray-900">เพิ่มสมาชิกใหม่</h2>
             <p className="mb-4 text-[11px] text-gray-500">ปกติสมาชิกจะถูกเพิ่มอัตโนมัติเมื่อล็อกอิน Google — ใช้ช่องนี้เพื่อเพิ่มล่วงหน้า</p>
             <div className="space-y-3">
@@ -73,10 +71,8 @@ export function NewMemberDialog() {
                 {pending ? 'กำลังเพิ่ม…' : 'เพิ่มสมาชิก'}
               </button>
             </div>
-          </div>
-          <style>{`.fld{width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;font-size:13px;outline:none}.fld:focus{border-color:#93c5fd;box-shadow:0 0 0 3px rgba(147,197,253,.25)}`}</style>
-        </div>
-      )}
+            <style>{`.fld{width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;font-size:13px;outline:none}.fld:focus{border-color:#93c5fd;box-shadow:0 0 0 3px rgba(147,197,253,.25)}`}</style>
+      </Modal>
     </>
   )
 }

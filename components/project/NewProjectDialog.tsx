@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import type { Team } from '@/lib/domain/types'
 import { createProjectAction } from '@/app/actions/projects'
 import { DepartmentPicker } from './DepartmentPicker'
+import { Modal } from '@/components/ui/Modal'
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10)
@@ -51,10 +52,7 @@ export function NewProjectDialog({ teams, departmentOptions }: { teams: Team[]; 
         <span className="text-base leading-none">+</span> New Project
       </button>
 
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/30" onClick={() => setOpen(false)} />
-          <div className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-5 shadow-xl">
+      <Modal open={open} onClose={() => setOpen(false)} panelClassName="w-full max-w-lg">
             <h2 className="mb-4 text-base font-semibold text-gray-900">สร้างโปรเจกต์ใหม่</h2>
             <div className="space-y-3">
               <Field label="ชื่อโปรเจกต์ *">
@@ -86,10 +84,8 @@ export function NewProjectDialog({ teams, departmentOptions }: { teams: Team[]; 
                 {pending ? 'กำลังสร้าง…' : 'สร้าง'}
               </button>
             </div>
-          </div>
-          <style>{`.fld{width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;font-size:13px;outline:none}.fld:focus{border-color:#93c5fd;box-shadow:0 0 0 3px rgba(147,197,253,.25)}`}</style>
-        </div>
-      )}
+            <style>{`.fld{width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;font-size:13px;outline:none}.fld:focus{border-color:#93c5fd;box-shadow:0 0 0 3px rgba(147,197,253,.25)}`}</style>
+      </Modal>
     </>
   )
 }

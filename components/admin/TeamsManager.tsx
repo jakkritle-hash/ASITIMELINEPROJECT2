@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { User, Team } from '@/lib/domain/types'
 import { createTeam, addTeamMember, removeTeamMember, setTeamLead } from '@/lib/domain/adminOps'
 import { createTeamAction, deleteTeamAction, addTeamMemberAction, removeTeamMemberAction, setTeamLeadAction } from '@/app/actions/admin'
@@ -9,12 +9,20 @@ import { Avatar } from '@/components/ui/Avatar'
 export function TeamsManager({ users, teams: initial, canEdit = true }: { users: User[]; teams: Team[]; canEdit?: boolean }) {
   const [teams, setTeams] = useState<Team[]>(initial)
   const [newName, setNewName] = useState('')
+  const [hint, setHint] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
   const usersById = new Map(users.map((u) => [u.id, u]))
 
   function handleCreate() {
     if (!canEdit) return
     const name = newName.trim()
-    if (!name) return
+    if (!name) {
+      // กันกรณีกดปุ่มโดยยังไม่พิมพ์ชื่อ — ให้ feedback แทนที่จะเงียบ
+      setHint('พิมพ์ชื่อทีมก่อนกด New Team')
+      inputRef.current?.focus()
+      return
+    }
+    setHint('')
     setTeams((prev) => createTeam(prev, `t${Date.now()}`, name, new Date().toISOString()))
     setNewName('')
     void createTeamAction(name)
@@ -30,16 +38,21 @@ export function TeamsManager({ users, teams: initial, canEdit = true }: { users:
   return (
     <div className="space-y-4">
       {canEdit && (
-        <div className="flex gap-2">
-          <input
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            placeholder="ชื่อทีมใหม่ (เช่น Design)"
-            className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-blue-300"
-          />
-          <button onClick={handleCreate} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-            + New Team
-          </button>
+        <div>
+          <div className="flex gap-2">
+            <input
+              ref={inputRef}
+              value={newName}
+              onChange={(e) => { setNewName(e.target.value); if (hint) setHint('') }}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleCreate() } }}
+              placeholder="ชื่อทีมใหม่ (เช่น Design)"
+              className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-blue-300"
+            />
+            <button onClick={handleCreate} className="shrink-0 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+              + New Team
+            </button>
+          </div>
+          {hint && <p className="mt-1.5 text-xs text-amber-600">{hint}</p>}
         </div>
       )}
 
