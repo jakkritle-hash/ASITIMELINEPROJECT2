@@ -6,12 +6,25 @@ import { createTeam, addTeamMember, removeTeamMember, setTeamLead } from '@/lib/
 import { createTeamAction, deleteTeamAction, addTeamMemberAction, removeTeamMemberAction, setTeamLeadAction } from '@/app/actions/admin'
 import { Avatar } from '@/components/ui/Avatar'
 
-export function TeamsManager({ users, teams: initial, canEdit = true }: { users: User[]; teams: Team[]; canEdit?: boolean }) {
+export function TeamsManager({
+  users,
+  teams: initial,
+  canEdit = true,
+  canDelete = false,
+}: {
+  users: User[]
+  teams: Team[]
+  canEdit?: boolean
+  /** ลบทีมทั้งทีม (destructive) — Admin เท่านั้น */
+  canDelete?: boolean
+}) {
   const [teams, setTeams] = useState<Team[]>(initial)
   const [newName, setNewName] = useState('')
   const [hint, setHint] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const usersById = new Map(users.map((u) => [u.id, u]))
+  // คน Inactive ไม่แสดงและไม่ให้เลือก (requirement)
+  const isActive = (id: string) => usersById.get(id)?.active === true
 
   function handleCreate() {
     if (!canEdit) return
@@ -29,7 +42,7 @@ export function TeamsManager({ users, teams: initial, canEdit = true }: { users:
   }
 
   function handleDeleteTeam(teamId: string, teamName: string) {
-    if (!canEdit) return
+    if (!canDelete) return
     if (!confirm(`Delete team "${teamName}"? This cannot be undone.`)) return
     setTeams((prev) => prev.filter((t) => t.id !== teamId))
     void deleteTeamAction(teamId)
@@ -58,16 +71,17 @@ export function TeamsManager({ users, teams: initial, canEdit = true }: { users:
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {teams.map((t) => {
-        const nonMembers = users.filter((u) => !t.memberIds.includes(u.id))
+        const nonMembers = users.filter((u) => u.active && !t.memberIds.includes(u.id))
+        const visibleMemberIds = t.memberIds.filter(isActive)
         return (
           <div key={t.id} className="group rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-100 transition duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-500/5 hover:ring-indigo-100">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-800">
                 <span className="h-4 w-1 rounded-full bg-gradient-to-b from-indigo-500 to-blue-600" />
                 {t.name}
-                <span className="rounded-full bg-gray-100 px-1.5 text-[10px] font-normal text-gray-400">{t.memberIds.length}</span>
+                <span className="rounded-full bg-gray-100 px-1.5 text-[10px] font-normal text-gray-400">{visibleMemberIds.length}</span>
               </h3>
-              {canEdit && (
+              {canDelete && (
                 <button
                   onClick={() => handleDeleteTeam(t.id, t.name)}
                   className="rounded-md border border-red-200 px-2 py-1 text-[11px] text-red-600 transition hover:bg-red-50"
@@ -78,8 +92,8 @@ export function TeamsManager({ users, teams: initial, canEdit = true }: { users:
               )}
             </div>
             <div className="mb-3 flex flex-wrap gap-2">
-              {t.memberIds.length === 0 && <span className="text-xs text-gray-400">ยังไม่มีสมาชิก</span>}
-              {t.memberIds.map((id) => {
+              {visibleMemberIds.length === 0 && <span className="text-xs text-gray-400">ยังไม่มีสมาชิก</span>}
+              {visibleMemberIds.map((id) => {
                 const u = usersById.get(id)
                 const isLead = t.leadUserId === id
                 return (

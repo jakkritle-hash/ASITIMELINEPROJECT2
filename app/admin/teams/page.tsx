@@ -10,7 +10,8 @@ export default async function TeamsPage() {
   const user = await getCurrentUser()
   if (!user) return null
   if (!canAccessPage(user, 'teams')) return <NoAccess user={user} />
-  const canEdit = canManageMembers(user)
+  // ทุกคนสร้าง/จัดการทีมได้ (requirement: ไม่ต้อง lock) — เหลือเฉพาะ "ลบทีม" ที่ Admin
+  const canDelete = canManageMembers(user)
 
   const { users, teams, usingFixtures } = await getAdminData()
   return (
@@ -22,10 +23,9 @@ export default async function TeamsPage() {
         </div>
         <div className="flex items-center gap-2">
           {usingFixtures && <span className="rounded-md bg-amber-50 px-2 py-1 text-[11px] text-amber-600">โหมดตัวอย่าง</span>}
-          {!canEdit && <span className="rounded-md bg-gray-100 px-2 py-1 text-[11px] text-gray-500">Read-only</span>}
         </div>
       </header>
-      <TeamsManager users={users} teams={teams} canEdit={canEdit} />
+      <TeamsManager users={users} teams={teams} canEdit canDelete={canDelete} />
     </main>
   )
 }

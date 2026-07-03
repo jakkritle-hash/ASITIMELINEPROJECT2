@@ -70,7 +70,8 @@ function enrich(users: User[], projects: Project[], tasks: Task[], now: Date, ho
     return {
       ...p,
       kanbanColumns,
-      members: p.memberIds.map((id) => usersById.get(id)).filter((u): u is User => !!u),
+      // แสดงเฉพาะสมาชิกที่ยัง active (requirement: คน Inactive ไม่เอามาแสดง)
+      members: p.memberIds.map((id) => usersById.get(id)).filter((u): u is User => !!u && u.active),
       tasks: projTasks,
       status: worstStatus(projTasks.map((t) => t.slaStatus)),
       workingDays: workingDaysBetween(p.startDate, p.dueDate, holidays),

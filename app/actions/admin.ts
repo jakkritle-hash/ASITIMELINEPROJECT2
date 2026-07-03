@@ -28,6 +28,13 @@ async function requireAdmin(): Promise<{ ok: true; user: User } | { ok: false; e
   return { ok: true, user }
 }
 
+/** แค่ล็อกอิน (ทุก role) — ใช้กับงานทีมที่เปิดให้ผู้ใช้ทั่วไปทำเอง */
+async function requireUser(): Promise<{ ok: true; user: User } | { ok: false; error: string }> {
+  const user = await getCurrentUser()
+  if (!user) return { ok: false, error: 'unauthenticated' }
+  return { ok: true, user }
+}
+
 /** สร้างสมาชิกใหม่ด้วยตนเอง (Admin) — ตรวจโดเมน + กันอีเมลซ้ำ
  *  หมายเหตุ: ผู้ใช้ที่ล็อกอิน Google @planbmedia.co.th จะถูกเพิ่มอัตโนมัติอยู่แล้ว (provisionUser) */
 export async function createMemberAction(input: { email: string; name: string; role: Role }): Promise<ActionResult> {
@@ -117,9 +124,10 @@ export async function setUserPageAccessAction(userId: string, allowedPages: stri
   return { ok: true }
 }
 
+/** สร้างทีม — เปิดให้ผู้ใช้ทุกคนสร้างเองได้ (requirement: ไม่ต้อง lock) */
 export async function createTeamAction(name: string): Promise<ActionResult> {
   if (!sheetsConfigured()) return { ok: true }
-  const gate = await requireAdmin()
+  const gate = await requireUser()
   if (!gate.ok) return gate
   const existing = await getTab('Teams')
   const id = `t${existing.length + 1}-${Date.now()}`
@@ -151,21 +159,21 @@ export async function deleteTeamAction(teamId: string): Promise<ActionResult> {
 
 export async function addTeamMemberAction(teamId: string, userId: string): Promise<ActionResult> {
   if (!sheetsConfigured()) return { ok: true }
-  const gate = await requireAdmin()
+  const gate = await requireUser()
   if (!gate.ok) return gate
   return writeTeam(teamId, (teams) => addTeamMember(teams, teamId, userId))
 }
 
 export async function removeTeamMemberAction(teamId: string, userId: string): Promise<ActionResult> {
   if (!sheetsConfigured()) return { ok: true }
-  const gate = await requireAdmin()
+  const gate = await requireUser()
   if (!gate.ok) return gate
   return writeTeam(teamId, (teams) => removeTeamMember(teams, teamId, userId))
 }
 
 export async function setTeamLeadAction(teamId: string, userId: string): Promise<ActionResult> {
   if (!sheetsConfigured()) return { ok: true }
-  const gate = await requireAdmin()
+  const gate = await requireUser()
   if (!gate.ok) return gate
   return writeTeam(teamId, (teams) => setTeamLead(teams, teamId, userId))
 }

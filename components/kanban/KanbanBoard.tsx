@@ -31,10 +31,14 @@ function groupLogs(logs: ActivityLogEntry[]): Record<string, ActivityLogEntry[]>
 export function KanbanBoard({
   project,
   users,
+  assignableUsers,
   initialLogs = [],
 }: {
   project: EnrichedProject
+  /** ผู้ใช้ทั้งหมด — ใช้แปลง id→ชื่อ (เช่นใน activity log) */
   users: User[]
+  /** ผู้ที่มอบหมายงานให้ได้ (สมาชิกทีม + active) — default = users */
+  assignableUsers?: User[]
   initialLogs?: ActivityLogEntry[]
 }) {
   const [tasks, setTasks] = useState<EnrichedTask[]>(project.tasks)
@@ -112,6 +116,7 @@ export function KanbanBoard({
         <TaskDetailDrawer
           task={selected}
           users={users}
+          assignableUsers={assignableUsers ?? users}
           logs={logsByTask[selected.id] ?? []}
           onSave={(changes) => handleSave(selected.id, changes)}
           onDelete={() => handleDelete(selected.id)}

@@ -28,6 +28,14 @@ export interface CreateResult {
   error?: string
 }
 
+/** สมาชิกโปรเจกต์จากทีม: รวมสมาชิกทีม + เจ้าของ (ถ้าไม่มีทีม → เจ้าของคนเดียว) */
+async function membersFromTeam(teamId: string, ownerId: string): Promise<string[]> {
+  if (!teamId) return [ownerId]
+  const team = (await getTab('Teams')).map(parseTeam).find((t) => t.id === teamId)
+  if (!team) return [ownerId]
+  return Array.from(new Set([...team.memberIds, ownerId]))
+}
+
 /** สร้างโปรเจกต์ใหม่ — ผู้ใช้ที่ล็อกอินสร้างของตัวเองได้ (requirement: สร้าง Project ของตัวเองได้) */
 export async function createProjectAction(input: NewProjectInput): Promise<CreateResult> {
   if (!sheetsConfigured()) return { ok: true, id: 'dev' }
@@ -38,7 +46,11 @@ export async function createProjectAction(input: NewProjectInput): Promise<Creat
   const [existing, config] = await Promise.all([getTab('Projects'), getAppConfig()])
   const now = new Date().toISOString()
   const id = `p${existing.length + 1}-${Date.now()}`
-  const members = input.memberIds && input.memberIds.length > 0 ? input.memberIds : [user.id]
+  // เลือกทีม → ดึงสมาชิกทีมเข้าโปรเจกต์อัตโนมัติ (ทีมแสดง/แก้ได้ภายหลังบนหน้าโปรเจกต์)
+  const members =
+    input.memberIds && input.memberIds.length > 0
+      ? input.memberIds
+      : await membersFromTeam(input.teamId || '', user.id)
 
   const project: Project = {
     id,
@@ -96,6 +108,22 @@ export async function setProjectDepartmentsAction(projectId: string, departments
   if ('error' in ctx) return { ok: false, error: ctx.error }
   const { departments: allowed } = await getAppConfig()
   const updated: Project = { ...ctx.project, departments: sanitizeDepartments(departments, allowed), updatedAt: new Date().toISOString() }
+  await updateRowById('Projects', projectId, serializeProject(updated), P_HEADER)
+  revalidatePath('/')
+  revalidatePath('/performance')
+  revalidatePath(`/projects/${projectId}`)
+  invalidateSheetCache()
+  return { ok: true }
+}
+
+/** เปลี่ยนทีมของโปรเจกต์ — sync สมาชิกทีมใหม่เข้าโปรเจกต์ (requirement: Edit เปลี่ยน Team ได้) */
+export async function setProjectTeamAction(projectId: string, teamId: string): Promise<CreateResult> {
+  if (!sheetsConfigured()) return { ok: true }
+  const ctx = await loadProjectForEdit(projectId)
+  if ('error' in ctx) return { ok: false, error: ctx.error }
+  // เปลี่ยนทีม → สมาชิกโปรเจกต์ตามทีมใหม่ + เจ้าของ; เลือก "ไม่ระบุ" → คงสมาชิกเดิมไว้
+  const memberIds = teamId ? await membersFromTeam(teamId, ctx.project.ownerUserId) : ctx.project.memberIds
+  const updated: Project = { ...ctx.project, teamId, memberIds, updatedAt: new Date().toISOString() }
   await updateRowById('Projects', projectId, serializeProject(updated), P_HEADER)
   revalidatePath('/')
   revalidatePath('/performance')

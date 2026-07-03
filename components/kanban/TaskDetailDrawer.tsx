@@ -23,13 +23,17 @@ function fmtTime(iso: string): string {
 export function TaskDetailDrawer({
   task,
   users,
+  assignableUsers,
   logs,
   onSave,
   onDelete,
   onClose,
 }: {
   task: EnrichedTask
+  /** ผู้ใช้ทั้งหมด — ใช้แปลง id→ชื่อใน log */
   users: User[]
+  /** ตัวเลือกผู้รับผิดชอบ (สมาชิกทีม + active) — default = users */
+  assignableUsers?: User[]
   logs: ActivityLogEntry[]
   onSave: (changes: Partial<EnrichedTask>) => void
   onDelete: () => void
@@ -42,6 +46,11 @@ export function TaskDetailDrawer({
   const [dueDate, setDueDate] = useState(task.dueDate)
 
   const userName = (id: string) => users.find((u) => u.id === id)?.name ?? id
+  // ตัวเลือกมอบหมาย + คงผู้รับผิดชอบปัจจุบันไว้แม้ไม่อยู่ในทีม/ถูกปิดใช้งาน (กัน select เพี้ยนกับงานเก่า)
+  const options = assignableUsers ?? users
+  const assigneeOptions = options.some((u) => u.id === task.assigneeId)
+    ? options
+    : [...users.filter((u) => u.id === task.assigneeId), ...options]
 
   return (
     <>
@@ -61,7 +70,7 @@ export function TaskDetailDrawer({
           </Field>
           <Field label="ผู้รับผิดชอบ">
             <select className="input" value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)}>
-              {users.map((u) => (
+              {assigneeOptions.map((u) => (
                 <option key={u.id} value={u.id}>{u.name}</option>
               ))}
             </select>

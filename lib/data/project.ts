@@ -1,4 +1,4 @@
-import type { User, ActivityLogEntry } from '@/lib/domain/types'
+import type { User, Team, ActivityLogEntry } from '@/lib/domain/types'
 import { getDashboardData, type EnrichedProject, sheetsConfigured } from './dashboard'
 import { getAdminData } from './admin'
 import { getTabCached } from '@/lib/sheets/repository'
@@ -7,6 +7,7 @@ import { parseLog } from '@/lib/sheets/schema'
 export interface ProjectData {
   project: EnrichedProject
   users: User[]
+  teams: Team[]
   logs: ActivityLogEntry[]
 }
 
@@ -24,5 +25,5 @@ export async function getProjectData(id: string, now: Date = new Date()): Promis
       .filter((l) => taskIds.has(l.entityId) || l.entityId === project.id)
       .sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1)) // ใหม่→เก่า
   }
-  return { project, users: admin.users, logs }
+  return { project, users: admin.users, teams: admin.teams, logs }
 }

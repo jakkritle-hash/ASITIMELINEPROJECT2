@@ -6,6 +6,7 @@ import { KanbanBoard } from '@/components/kanban/KanbanBoard'
 import { NewTaskDialog } from '@/components/kanban/NewTaskDialog'
 import { ProjectActions } from '@/components/project/ProjectActions'
 import { ProjectDepartments } from '@/components/project/ProjectDepartments'
+import { ProjectTeam } from '@/components/project/ProjectTeam'
 import { AvatarGroup } from '@/components/ui/Avatar'
 import { STATUS_META } from '@/components/ui/StatusBadge'
 
@@ -15,8 +16,14 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   const { id } = await params
   const [data, config] = await Promise.all([getProjectData(id), getAppConfig()])
   if (!data) notFound()
-  const { project, users, logs } = data
+  const { project, users, teams, logs } = data
   const meta = STATUS_META[project.status]
+
+  // ผู้รับผิดชอบที่เลือกได้: เฉพาะสมาชิกทีมของโปรเจกต์ (ถ้าไม่มีทีม → ทุกคน) และตัดคน Inactive ออก
+  const team = teams.find((t) => t.id === project.teamId)
+  const teamMemberIds = new Set(team?.memberIds ?? [])
+  const active = users.filter((u) => u.active)
+  const assignable = team && teamMemberIds.size > 0 ? active.filter((u) => teamMemberIds.has(u.id)) : active
 
   return (
     <main className="w-full px-4 py-6 sm:px-6 lg:px-8">
@@ -42,20 +49,21 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
             </div>
             <span className="text-xs text-gray-500">{project.progress}% · {project.startDate} → {project.dueDate} · {project.tasks.length} งาน</span>
           </div>
-          <div className="mt-2">
+          <div className="mt-2 flex flex-col gap-1.5">
+            <ProjectTeam projectId={project.id} teamId={project.teamId} teams={teams} />
             <ProjectDepartments projectId={project.id} departments={project.departments} options={config.departments} />
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <AvatarGroup users={project.members} size={22} />
-          <NewTaskDialog projectId={project.id} users={users} />
+          <NewTaskDialog projectId={project.id} users={assignable} />
           <ProjectActions projectId={project.id} archived={project.archived} />
         </div>
       </header>
 
       {/* key = ชุด id ของ task: remount เมื่อมีการเพิ่ม/ลบงาน (จาก server revalidate)
           แต่การ move/edit (id เดิม) ไม่ remount จึงคง optimistic state ไว้ */}
-      <KanbanBoard key={project.tasks.map((t) => t.id).join(',')} project={project} users={users} initialLogs={logs} />
+      <KanbanBoard key={project.tasks.map((t) => t.id).join(',')} project={project} users={users} assignableUsers={assignable} initialLogs={logs} />
     </main>
   )
 }

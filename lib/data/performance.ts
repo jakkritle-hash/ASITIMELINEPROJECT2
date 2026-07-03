@@ -22,6 +22,12 @@ export async function getPerformance(): Promise<PerformanceData> {
   )
   const projects = data.projects.map((p) => ({ id: p.id, memberIds: p.memberIds, ownerUserId: p.ownerUserId, departments: p.departments }))
   const projectNames = Object.fromEntries(data.projects.map((p) => [p.id, p.name]))
-  const stats = computePerformance(admin.users, tasks, projects, config.weights).filter((s) => s.taskTotal > 0 || s.projectCount > 0)
+  // จัดอันดับเฉพาะผู้ใช้ที่ยัง active (requirement: คน Inactive ไม่เอามาแสดง)
+  const stats = computePerformance(
+    admin.users.filter((u) => u.active),
+    tasks,
+    projects,
+    config.weights,
+  ).filter((s) => s.taskTotal > 0 || s.projectCount > 0)
   return { stats, projectNames }
 }
