@@ -10,23 +10,41 @@ import { Avatar } from '@/components/ui/Avatar'
 /** ตารางคุมสิทธิ์เห็นหน้า: รายบุคคล × รายหน้า (toggle) — Admin เห็นทุกหน้าเสมอ */
 export function PageAccessMatrix({ users: initial, canEdit = true }: { users: User[]; canEdit?: boolean }) {
   const [users, setUsers] = useState<User[]>(initial)
+  const [saving, setSaving] = useState<Record<string, boolean>>({})
+  const [err, setErr] = useState('')
 
   function toggle(userId: string, pageKey: string, currentlyAllowed: boolean) {
-    if (!canEdit) return
-    setUsers((prev) =>
-      prev.map((u) => {
-        if (u.id !== userId) return u
-        const current = effectivePageAccess(u)
-        const next = currentlyAllowed ? current.filter((k) => k !== pageKey) : [...new Set([...current, pageKey])]
-        const pageAccess = normalizePageAccess(next)
-        void setUserPageAccessAction(userId, next)
-        return { ...u, pageAccess }
-      }),
-    )
+    if (!canEdit || saving[userId]) return // กันกดรัวจนยิงซ้อน (ลด quota + กันสถานะเพี้ยน)
+    const user = users.find((u) => u.id === userId)
+    if (!user) return
+
+    const prevAccess = user.pageAccess
+    const current = effectivePageAccess(user)
+    const next = currentlyAllowed ? current.filter((k) => k !== pageKey) : [...new Set([...current, pageKey])]
+    const optimistic = normalizePageAccess(next)
+
+    setErr('')
+    setSaving((s) => ({ ...s, [userId]: true }))
+    setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, pageAccess: optimistic } : u)))
+
+    setUserPageAccessAction(userId, next)
+      .then((res) => {
+        if (!res.ok) {
+          setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, pageAccess: prevAccess } : u)))
+          setErr(res.error === 'forbidden' ? 'เฉพาะ Admin เท่านั้น' : 'บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง')
+        }
+      })
+      .catch(() => {
+        // เช่น Sheets quota (429) ชั่วคราว — คืนสถานะเดิม แล้วให้ลองใหม่
+        setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, pageAccess: prevAccess } : u)))
+        setErr('บันทึกไม่สำเร็จ (อาจติดลิมิตชั่วคราว) — รอสักครู่แล้วลองใหม่')
+      })
+      .finally(() => setSaving((s) => ({ ...s, [userId]: false })))
   }
 
   return (
     <div className="overflow-x-auto rounded-xl bg-white shadow-sm ring-1 ring-gray-100">
+      {err && <p className="border-b border-red-100 bg-red-50 px-3 py-2 text-xs text-red-600">{err}</p>}
       <table className="w-full min-w-[680px] text-sm">
         <thead>
           <tr className="border-b border-gray-100 text-left text-xs text-gray-500">
@@ -61,7 +79,7 @@ export function PageAccessMatrix({ users: initial, canEdit = true }: { users: Us
                     <td key={p.key} className="p-3 text-center">
                       <button
                         onClick={() => toggle(u.id, p.key, allowed)}
-                        disabled={!canEdit}
+                        disabled={!canEdit || saving[u.id]}
                         role="switch"
                         aria-checked={allowed}
                         aria-label={`${u.name} เห็น ${p.label}`}

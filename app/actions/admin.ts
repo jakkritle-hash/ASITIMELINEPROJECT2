@@ -91,9 +91,11 @@ export async function setUserPageAccessAction(userId: string, allowedPages: stri
   const updated = setUserPageAccess(users, userId, normalizePageAccess(allowedPages)).find((u) => u.id === userId)
   if (!updated) return { ok: false, error: 'not found' }
   await updateRowById('Users', userId, serializeUser(updated), U_HEADER)
-  revalidatePath('/admin/members')
-  revalidatePath('/', 'layout') // nav ต้องอัปเดตสิทธิ์เมนู
   invalidateSheetCache()
+  // หมายเหตุ: ไม่ revalidatePath('/', 'layout') — การ revalidate ทั้ง layout ระหว่าง
+  // เรียก action แบบ fire-and-forget ทำให้ RSC stream ถูกยกเลิก → "Connection closed"
+  // เมนู nav ของผู้ใช้ที่ถูกแก้จะอัปเดตเองตอนโหลดหน้าครั้งถัดไป (หน้าเป็น force-dynamic)
+  revalidatePath('/admin/members')
   return { ok: true }
 }
 
