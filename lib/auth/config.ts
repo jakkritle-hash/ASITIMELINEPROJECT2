@@ -14,7 +14,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const email = (profile?.email as string) || ''
       if (!isAllowedEmail(email, allowedDomain)) return false
       if (sheetsConfigured()) {
-        await provisionUser(email, (profile?.name as string) || '', new Date().toISOString())
+        const u = await provisionUser(email, (profile?.name as string) || '', new Date().toISOString())
+        // บัญชีที่ถูก Admin ปิดการเข้าใช้งาน (active=false) → ห้ามล็อกอิน
+        if (!u.active) return false
       }
       return true
     },

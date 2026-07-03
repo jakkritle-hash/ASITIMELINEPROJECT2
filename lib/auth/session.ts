@@ -21,6 +21,8 @@ export async function getCurrentUser(): Promise<User | null> {
 
   const { users } = await getAdminData()
   const found = users.find((u) => u.email.toLowerCase() === email.toLowerCase())
+  // บัญชีที่ถูกปิดการเข้าใช้งาน → ปฏิบัติเสมือนไม่มีสิทธิ์ (session เดิมถูกตัดในการนำทางครั้งถัดไป)
+  if (found && !found.active) return null
   if (found) return found
 
   // มี session แต่ยังไม่พบใน source (เช่น fixtures) → สร้าง object ชั่วคราว

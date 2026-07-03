@@ -21,11 +21,11 @@ export interface ActionResult {
   error?: string
 }
 
-async function requireAdmin(): Promise<{ ok: true } | { ok: false; error: string }> {
+async function requireAdmin(): Promise<{ ok: true; user: User } | { ok: false; error: string }> {
   const user = await getCurrentUser()
   if (!user) return { ok: false, error: 'unauthenticated' }
   if (!canManageMembers(user)) return { ok: false, error: 'forbidden' }
-  return { ok: true }
+  return { ok: true, user }
 }
 
 /** สร้างสมาชิกใหม่ด้วยตนเอง (Admin) — ตรวจโดเมน + กันอีเมลซ้ำ
@@ -60,6 +60,8 @@ export async function setRoleAction(userId: string, role: Role): Promise<ActionR
   if (!sheetsConfigured()) return { ok: true }
   const gate = await requireAdmin()
   if (!gate.ok) return gate
+  // กันล็อกตัวเองออกจากระบบจัดการ: Admin เปลี่ยนบทบาทตัวเองออกจาก Admin ไม่ได้
+  if (gate.user.id === userId && role !== 'Admin') return { ok: false, error: 'เปลี่ยนบทบาทตัวเองออกจาก Admin ไม่ได้' }
   const users = (await getTab('Users')).map(parseUser)
   const updated = updateUserRole(users, userId, role).find((u) => u.id === userId)
   if (!updated) return { ok: false, error: 'not found' }
@@ -73,10 +75,26 @@ export async function toggleActiveAction(userId: string): Promise<ActionResult> 
   if (!sheetsConfigured()) return { ok: true }
   const gate = await requireAdmin()
   if (!gate.ok) return gate
+  // กันปิดบัญชีตัวเอง (จะล็อกตัวเองออกจากระบบทันที)
+  if (gate.user.id === userId) return { ok: false, error: 'ปิด/เปิดการใช้งานบัญชีตัวเองไม่ได้' }
   const users = (await getTab('Users')).map(parseUser)
   const updated = toggleUserActive(users, userId).find((u) => u.id === userId)
   if (!updated) return { ok: false, error: 'not found' }
   await updateRowById('Users', userId, serializeUser(updated), U_HEADER)
+  revalidatePath('/admin/members')
+  invalidateSheetCache()
+  return { ok: true }
+}
+
+/** ลบสมาชิกถาวรออกจาก Users tab — Admin เท่านั้น, ห้ามลบบัญชีตัวเอง
+ *  หมายเหตุ: ถ้าลบอีเมลที่อยู่ใน BOOTSTRAP_ADMIN_EMAILS เขาจะถูกสร้างกลับเป็น Admin เมื่อล็อกอินครั้งถัดไป */
+export async function deleteMemberAction(userId: string): Promise<ActionResult> {
+  if (!sheetsConfigured()) return { ok: true }
+  const gate = await requireAdmin()
+  if (!gate.ok) return gate
+  if (gate.user.id === userId) return { ok: false, error: 'ลบบัญชีตัวเองไม่ได้' }
+  const ok = await deleteRowById('Users', userId)
+  if (!ok) return { ok: false, error: 'not found' }
   revalidatePath('/admin/members')
   invalidateSheetCache()
   return { ok: true }

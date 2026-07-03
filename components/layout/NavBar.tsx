@@ -1,9 +1,11 @@
 import Link from 'next/link'
+import type { User } from '@/lib/domain/types'
 import { getNotifications } from '@/lib/data/notifications'
 import { getCurrentUser } from '@/lib/auth/session'
 import { accessiblePageKeys } from '@/lib/domain/permissions'
 import { Bell } from './Bell'
 import { NavLinks } from './NavLinks'
+import { AccountMenu } from './AccountMenu'
 
 export async function NavBar() {
   let items: Awaited<ReturnType<typeof getNotifications>>['items'] = []
@@ -17,9 +19,10 @@ export async function NavBar() {
   }
 
   // แสดงเฉพาะเมนูที่ผู้ใช้ปัจจุบันเข้าถึงได้
+  let user: User | null = null
   let allowed: string[] = []
   try {
-    const user = await getCurrentUser()
+    user = await getCurrentUser()
     if (user) allowed = accessiblePageKeys(user)
   } catch {
     // ไม่มี user / อ่านพลาด — ไม่แสดงเมนู
@@ -42,7 +45,10 @@ export async function NavBar() {
 
         <NavLinks allowed={allowed} />
 
-        <Bell items={items} unread={unread} />
+        <div className="ml-auto flex items-center gap-2.5">
+          <Bell items={items} unread={unread} />
+          <AccountMenu user={user} />
+        </div>
       </div>
     </nav>
   )

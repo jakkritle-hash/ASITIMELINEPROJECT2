@@ -27,8 +27,8 @@ export default async function MembersPage() {
           {canEdit ? <NewMemberDialog /> : <span className="rounded-md bg-gray-100 px-2 py-1 text-[11px] text-gray-500">Read-only</span>}
         </div>
       </header>
-      {/* key = จำนวนผู้ใช้: remount ตารางเมื่อมีการเพิ่มสมาชิก (จาก server revalidate) */}
-      <MembersTable key={users.length} users={users} canEdit={canEdit} />
+      {/* key = จำนวนผู้ใช้: remount ตารางเมื่อมีการเพิ่ม/ลบสมาชิก (จาก server revalidate) */}
+      <MembersTable key={users.length} users={users} canEdit={canEdit} currentUserId={user.id} />
 
       <section className="mt-8">
         <h2 className="text-sm font-semibold text-gray-900">สิทธิ์การเห็นหน้าในเว็บ</h2>
