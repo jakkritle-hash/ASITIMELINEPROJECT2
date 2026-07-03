@@ -82,8 +82,12 @@ export function Bell({ items, unread: serverUnread }: { items: NotificationItem[
       >
         <span className="text-lg">🔔</span>
         {unread > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white">
-            {unread > 9 ? '9+' : unread}
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4">
+            {/* วงกระเพื่อมหลัง badge (uiverse-style ping) — เตือนสายตาว่ามีของใหม่ */}
+            <span className="absolute inset-0 animate-ping rounded-full bg-red-400 opacity-60 motion-reduce:hidden" />
+            <span className="relative flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white">
+              {unread > 9 ? '9+' : unread}
+            </span>
           </span>
         )}
       </button>
