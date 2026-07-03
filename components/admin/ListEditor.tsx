@@ -93,13 +93,13 @@ export function ListEditor({
             placeholder={placeholder}
             className={`w-full max-w-xs rounded-lg border border-gray-200 px-3 py-1.5 text-sm outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-200/50 ${mono ? 'font-mono' : ''}`}
           />
-          <button onClick={add} disabled={pending} className="shrink-0 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 transition hover:bg-gray-100">
+          <button onClick={add} disabled={pending} className="btn-press shrink-0 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 transition hover:bg-gray-100">
             + เพิ่ม
           </button>
           <button
             onClick={save}
             disabled={pending || !dirty}
-            className="shrink-0 rounded-lg bg-indigo-600 px-3.5 py-1.5 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-40"
+            className="btn-shine btn-press shrink-0 rounded-lg bg-indigo-600 px-3.5 py-1.5 text-sm font-medium text-white transition hover:bg-indigo-700 hover:shadow-md hover:shadow-indigo-500/25 disabled:opacity-40"
           >
             {pending ? 'กำลังบันทึก…' : dirty ? 'บันทึก' : 'บันทึกแล้ว'}
           </button>

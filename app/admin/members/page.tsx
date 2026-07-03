@@ -31,7 +31,10 @@ export default async function MembersPage() {
       <MembersTable key={users.length} users={users} canEdit={canEdit} currentUserId={user.id} />
 
       <section className="mt-8">
-        <h2 className="text-sm font-semibold text-gray-900">สิทธิ์การเห็นหน้าในเว็บ</h2>
+        <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+          <span className="h-4 w-1 rounded-full bg-gradient-to-b from-indigo-500 to-blue-600" />
+          สิทธิ์การเห็นหน้าในเว็บ
+        </h2>
         <p className="mb-3 text-xs text-gray-500">เปิด/ปิดว่าใครเห็นหน้าไหนได้บ้าง (Admin เห็นทุกหน้าเสมอ)</p>
         <PageAccessMatrix key={`m-${users.length}`} users={users} canEdit={canEdit} />
       </section>

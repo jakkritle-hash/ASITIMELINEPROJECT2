@@ -68,13 +68,16 @@ export default async function ControlDataPage() {
 
 function Section({ title, desc, badge, children }: { title: string; desc: string; badge?: string; children: React.ReactNode }) {
   return (
-    <section className="animate-rise rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
+    <section className="animate-rise rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100 transition duration-300 hover:shadow-lg hover:shadow-indigo-500/5 hover:ring-indigo-100">
       <div className="mb-3 flex items-start justify-between gap-2">
         <div>
-          <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+            <span className="h-4 w-1 rounded-full bg-gradient-to-b from-indigo-500 to-blue-600" />
+            {title}
+          </h2>
           <p className="text-[11px] text-gray-400">{desc}</p>
         </div>
-        {badge && <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">{badge}</span>}
+        {badge && <span className="shrink-0 rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-500 ring-1 ring-indigo-100">{badge}</span>}
       </div>
       {children}
     </section>

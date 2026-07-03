@@ -8,10 +8,10 @@ import { STATUS_META } from '@/components/ui/StatusBadge'
 export const dynamic = 'force-dynamic'
 
 /** เหรียญตามอันดับ — แชมป์ 3 อันดับแรกได้ 🏆🥈🥉 ที่เหลือเป็นเลขอันดับ */
-const MEDALS: Record<number, { icon: string; label: string; ring: string; badge: string }> = {
-  1: { icon: '🏆', label: 'Champion', ring: 'ring-2 ring-amber-400', badge: 'bg-gradient-to-br from-amber-400 to-yellow-500 text-white' },
-  2: { icon: '🥈', label: 'Runner-up', ring: 'ring-1 ring-slate-300', badge: 'bg-gradient-to-br from-slate-300 to-slate-400 text-white' },
-  3: { icon: '🥉', label: '3rd', ring: 'ring-1 ring-orange-300', badge: 'bg-gradient-to-br from-orange-300 to-amber-600 text-white' },
+const MEDALS: Record<number, { icon: string; label: string; ring: string; badge: string; bar: string }> = {
+  1: { icon: '🏆', label: 'Champion', ring: 'ring-2 ring-amber-400', badge: 'bg-gradient-to-br from-amber-400 to-yellow-500 text-white', bar: 'from-amber-400 via-yellow-400 to-amber-500' },
+  2: { icon: '🥈', label: 'Runner-up', ring: 'ring-1 ring-slate-300', badge: 'bg-gradient-to-br from-slate-300 to-slate-400 text-white', bar: 'from-slate-300 via-slate-200 to-slate-400' },
+  3: { icon: '🥉', label: '3rd', ring: 'ring-1 ring-orange-300', badge: 'bg-gradient-to-br from-orange-300 to-amber-600 text-white', bar: 'from-orange-300 via-amber-400 to-orange-500' },
 }
 
 export default async function PerformancePage() {
@@ -42,8 +42,11 @@ export default async function PerformancePage() {
             return (
             <div
               key={s.user.id}
-              className={`relative rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100 transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10 ${medal?.ring ?? ''}`}
+              className={`relative overflow-hidden rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100 transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10 ${medal?.ring ?? ''}`}
             >
+              {/* แถบ accent ไล่เฉดด้านบน — สีตามเหรียญ (podium feel) */}
+              {medal && <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${medal.bar}`} />}
+
               {/* Rank badge (มุมขวาบน) */}
               <div className="absolute right-3 top-3 flex items-center gap-1.5">
                 {medal && <span className="text-lg leading-none" title={medal.label}>{medal.icon}</span>}
@@ -86,7 +89,10 @@ export default async function PerformancePage() {
                   <span className="font-mono font-medium text-gray-700">{s.completion}%</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-gray-200">
-                  <div className="h-full rounded-full bg-green-500" style={{ width: `${s.completion}%` }} />
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-green-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] transition-[width] duration-700"
+                    style={{ width: `${s.completion}%` }}
+                  />
                 </div>
               </div>
 

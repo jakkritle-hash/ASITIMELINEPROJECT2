@@ -77,7 +77,7 @@ export function NewTaskDialog({ projectId, users }: { projectId: string; users: 
             </div>
             <div className="mt-5 flex justify-end gap-2">
               <button onClick={() => setOpen(false)} className="rounded-lg px-4 py-2 text-sm text-gray-600 hover:bg-gray-100">ยกเลิก</button>
-              <button onClick={submit} disabled={pending} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
+              <button onClick={submit} disabled={pending} className="btn-press rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 hover:shadow-md hover:shadow-blue-500/25 disabled:opacity-50">
                 {pending ? 'กำลังเพิ่ม…' : 'เพิ่มงาน'}
               </button>
             </div>

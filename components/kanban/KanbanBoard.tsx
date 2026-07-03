@@ -93,11 +93,16 @@ export function KanbanBoard({
           key={col}
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => handleDrop(e.dataTransfer.getData('text/plain'), col)}
-          className="flex min-h-[60vh] min-w-[180px] flex-1 flex-col rounded-xl bg-gray-100 p-2"
+          className="flex min-h-[60vh] min-w-[180px] flex-1 flex-col rounded-2xl bg-slate-100/80 p-2 ring-1 ring-slate-200/60"
         >
           <div className="mb-2 flex items-center justify-between px-1 text-xs font-semibold text-gray-600">
-            <span>{col}</span>
-            <span className="text-gray-400">{grouped[col]?.length ?? 0}</span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-3 w-0.5 rounded-full bg-gradient-to-b from-indigo-400 to-blue-500" />
+              {col}
+            </span>
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1.5 font-mono text-[10px] text-gray-500 ring-1 ring-slate-200">
+              {grouped[col]?.length ?? 0}
+            </span>
           </div>
           <div className="flex flex-col gap-2">
             {grouped[col]?.map((t) => (

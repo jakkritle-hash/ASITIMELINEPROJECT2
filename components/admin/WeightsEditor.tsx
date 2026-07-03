@@ -71,7 +71,7 @@ export function WeightsEditor({ initial, readOnly = false }: { initial: Weights;
         <button
           onClick={save}
           disabled={pending || !dirty}
-          className="rounded-lg bg-indigo-600 px-3.5 py-1.5 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-40"
+          className="btn-shine btn-press rounded-lg bg-indigo-600 px-3.5 py-1.5 text-sm font-medium text-white transition hover:bg-indigo-700 hover:shadow-md hover:shadow-indigo-500/25 disabled:opacity-40"
         >
           {pending ? 'กำลังบันทึก…' : dirty ? 'บันทึกน้ำหนัก' : 'บันทึกแล้ว'}
         </button>
