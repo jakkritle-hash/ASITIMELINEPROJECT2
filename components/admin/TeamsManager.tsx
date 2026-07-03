@@ -60,9 +60,13 @@ export function TeamsManager({ users, teams: initial, canEdit = true }: { users:
       {teams.map((t) => {
         const nonMembers = users.filter((u) => !t.memberIds.includes(u.id))
         return (
-          <div key={t.id} className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-100">
+          <div key={t.id} className="group rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-100 transition duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-500/5 hover:ring-indigo-100">
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-800">{t.name}</h3>
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+                <span className="h-4 w-1 rounded-full bg-gradient-to-b from-indigo-500 to-blue-600" />
+                {t.name}
+                <span className="rounded-full bg-gray-100 px-1.5 text-[10px] font-normal text-gray-400">{t.memberIds.length}</span>
+              </h3>
               {canEdit && (
                 <button
                   onClick={() => handleDeleteTeam(t.id, t.name)}
