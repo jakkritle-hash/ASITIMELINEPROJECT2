@@ -1,7 +1,6 @@
 import type { User } from '@/lib/domain/types'
 import { auth } from './config'
 import { getAdminData } from '@/lib/data/admin'
-import { sheetsConfigured } from '@/lib/data/dashboard'
 import { FIXTURE_USERS } from '@/lib/data/fixtures'
 
 /**
@@ -33,6 +32,6 @@ export async function getCurrentUser(): Promise<User | null> {
     avatarColor: '#94a3b8',
     active: true,
     createdAt: '',
-    pageDenied: [],
+    pageAccess: [],
   }
 }

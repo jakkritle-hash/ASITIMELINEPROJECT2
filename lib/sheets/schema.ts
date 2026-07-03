@@ -1,7 +1,8 @@
 import type { User, Team, Project, Task, ActivityLogEntry, Role, SlaStatus } from '@/lib/domain/types'
+import { CONTENT_PAGES } from '@/lib/domain/pages'
 
 export const TAB_HEADERS = {
-  Users: ['id', 'email', 'name', 'role', 'avatarColor', 'active', 'createdAt', 'pageDenied'],
+  Users: ['id', 'email', 'name', 'role', 'avatarColor', 'active', 'createdAt', 'pageAccess'],
   Teams: ['id', 'name', 'memberIds', 'leadUserId', 'createdAt'],
   Projects: ['id', 'name', 'teamId', 'memberIds', 'ownerUserId', 'startDate', 'dueDate', 'status', 'description', 'kanbanColumns', 'createdAt', 'updatedAt', 'archived', 'departments'],
   Tasks: ['id', 'projectId', 'title', 'assigneeId', 'columnStatus', 'startDate', 'dueDate', 'slaStatus', 'editCount', 'description', 'order', 'createdAt', 'updatedAt'],
@@ -14,9 +15,19 @@ export type TabName = keyof typeof TAB_HEADERS
 const csvToArr = (s: string): string[] => (s ? s.split(',').map((x) => x.trim()).filter(Boolean) : [])
 const arrToCsv = (a: string[] = []): string => a.join(',')
 const toBool = (s: string): boolean => s === 'true' || s === 'TRUE'
+const PAGE_ACCESS_NONE = '__none__'
+const CONTENT_KEYS = CONTENT_PAGES.map((p) => p.key)
+
+function parsePageAccess(r: Record<string, string>): string[] {
+  if (Object.prototype.hasOwnProperty.call(r, 'pageAccess')) return csvToArr(r.pageAccess)
+  const denied = csvToArr(r.pageDenied)
+  if (denied.length === 0) return []
+  const access = CONTENT_KEYS.filter((k) => !denied.includes(k))
+  return access.length === 0 ? [PAGE_ACCESS_NONE] : access
+}
 
 export function parseUser(r: Record<string, string>): User {
-  return { id: r.id, email: r.email, name: r.name, role: (r.role as Role) || 'Member', avatarColor: r.avatarColor || '#94a3b8', active: toBool(r.active), createdAt: r.createdAt, pageDenied: csvToArr(r.pageDenied) }
+  return { id: r.id, email: r.email, name: r.name, role: (r.role as Role) || 'Member', avatarColor: r.avatarColor || '#94a3b8', active: toBool(r.active), createdAt: r.createdAt, pageAccess: parsePageAccess(r) }
 }
 export function parseTeam(r: Record<string, string>): Team {
   return { id: r.id, name: r.name, memberIds: csvToArr(r.memberIds), leadUserId: r.leadUserId || '', createdAt: r.createdAt }
@@ -47,7 +58,7 @@ export function parseLog(r: Record<string, string>): ActivityLogEntry {
 }
 
 export function serializeUser(u: User): Record<string, string> {
-  return { ...u, active: String(u.active), pageDenied: arrToCsv(u.pageDenied) }
+  return { ...u, active: String(u.active), pageAccess: arrToCsv(u.pageAccess) }
 }
 export function serializeTeam(t: Team): Record<string, string> {
   return { ...t, memberIds: arrToCsv(t.memberIds) }

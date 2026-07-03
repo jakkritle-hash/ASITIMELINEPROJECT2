@@ -9,8 +9,13 @@ export interface User {
   avatarColor: string
   active: boolean
   createdAt: string
-  /** คีย์ของหน้า (content page) ที่ถูก "ปิดสิทธิ์" ให้ผู้ใช้คนนี้ — ว่าง = เข้าได้ทุกหน้า */
-  pageDenied: string[]
+  /**
+   * รายการคีย์หน้าที่ผู้ใช้คนนี้ "เข้าถึงได้" (allow-list)
+   * - ว่าง = ใช้ค่าเริ่มต้น (เห็นเฉพาะหน้าเนื้อหา: dashboard, performance)
+   * - ['__none__'] = ปิดทุกหน้า
+   * - Admin เห็นทุกหน้าเสมอโดยไม่สนค่านี้
+   */
+  pageAccess: string[]
 }
 
 export interface Team {

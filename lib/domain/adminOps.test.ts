@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { updateUserRole, toggleUserActive, createTeam, addTeamMember, removeTeamMember, setTeamLead } from './adminOps'
+import { updateUserRole, toggleUserActive, setUserPageAccess, createTeam, addTeamMember, removeTeamMember, setTeamLead } from './adminOps'
 import type { User, Team } from './types'
 
 const users: User[] = [
-  { id: 'u1', email: 'a@x.co', name: 'A', role: 'Member', avatarColor: '#000', active: true, createdAt: '', pageDenied: [] },
-  { id: 'u2', email: 'b@x.co', name: 'B', role: 'Member', avatarColor: '#111', active: true, createdAt: '', pageDenied: [] },
+  { id: 'u1', email: 'a@x.co', name: 'A', role: 'Member', avatarColor: '#000', active: true, createdAt: '', pageAccess: [] },
+  { id: 'u2', email: 'b@x.co', name: 'B', role: 'Member', avatarColor: '#111', active: true, createdAt: '', pageAccess: [] },
 ]
 const teams: Team[] = [{ id: 't1', name: 'Marketing', memberIds: ['u1'], leadUserId: 'u1', createdAt: '' }]
 
@@ -14,6 +14,9 @@ describe('user ops', () => {
   })
   it('สลับ active', () => {
     expect(toggleUserActive(users, 'u1').find((u) => u.id === 'u1')!.active).toBe(false)
+  })
+  it('ตั้ง allow-list หน้าที่เข้าถึงได้', () => {
+    expect(setUserPageAccess(users, 'u1', ['dashboard', 'members']).find((u) => u.id === 'u1')!.pageAccess).toEqual(['dashboard', 'members'])
   })
 })
 

@@ -4,8 +4,8 @@ import { revalidatePath } from 'next/cache'
 import type { Role, User } from '@/lib/domain/types'
 import { getTab, updateRowById, appendRow, deleteRowById, invalidateSheetCache } from '@/lib/sheets/repository'
 import { parseUser, parseTeam, serializeUser, serializeTeam, TAB_HEADERS } from '@/lib/sheets/schema'
-import { updateUserRole, toggleUserActive, setUserPageDenied, addTeamMember, removeTeamMember, setTeamLead } from '@/lib/domain/adminOps'
-import { canManageMembers } from '@/lib/domain/permissions'
+import { updateUserRole, toggleUserActive, setUserPageAccess, addTeamMember, removeTeamMember, setTeamLead } from '@/lib/domain/adminOps'
+import { canManageMembers, normalizePageAccess } from '@/lib/domain/permissions'
 import { isAllowedEmail } from '@/lib/auth/policy'
 import { getCurrentUser } from '@/lib/auth/session'
 import { sheetsConfigured } from '@/lib/data/dashboard'
@@ -48,7 +48,7 @@ export async function createMemberAction(input: { email: string; name: string; r
     avatarColor: PALETTE[users.length % PALETTE.length],
     active: true,
     createdAt: new Date().toISOString(),
-    pageDenied: [],
+    pageAccess: [],
   }
   await appendRow('Users', serializeUser(user), U_HEADER)
   revalidatePath('/admin/members')
@@ -82,13 +82,13 @@ export async function toggleActiveAction(userId: string): Promise<ActionResult> 
   return { ok: true }
 }
 
-/** ตั้งสิทธิ์เห็นหน้าของผู้ใช้ (ส่งรายการหน้าที่ "ปิด") — Admin เท่านั้น */
-export async function setUserPageAccessAction(userId: string, deniedPages: string[]): Promise<ActionResult> {
+/** ตั้งสิทธิ์เห็นหน้าของผู้ใช้ (allow-list หน้าที่เห็นได้) — Admin เท่านั้น */
+export async function setUserPageAccessAction(userId: string, allowedPages: string[]): Promise<ActionResult> {
   if (!sheetsConfigured()) return { ok: true }
   const gate = await requireAdmin()
   if (!gate.ok) return gate
   const users = (await getTab('Users')).map(parseUser)
-  const updated = setUserPageDenied(users, userId, deniedPages).find((u) => u.id === userId)
+  const updated = setUserPageAccess(users, userId, normalizePageAccess(allowedPages)).find((u) => u.id === userId)
   if (!updated) return { ok: false, error: 'not found' }
   await updateRowById('Users', userId, serializeUser(updated), U_HEADER)
   revalidatePath('/admin/members')

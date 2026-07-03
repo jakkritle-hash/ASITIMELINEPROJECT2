@@ -14,10 +14,20 @@ function fmt(iso?: string): string {
   return new Intl.DateTimeFormat('th-TH', { timeZone: 'Asia/Bangkok', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(d)
 }
 
+function loadReadIds(): Set<string> {
+  if (typeof window === 'undefined') return new Set()
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY)
+    return raw ? new Set(JSON.parse(raw) as string[]) : new Set()
+  } catch {
+    return new Set()
+  }
+}
+
 export function Bell({ items, unread: serverUnread }: { items: NotificationItem[]; unread: number }) {
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const [readIds, setReadIds] = useState<Set<string>>(new Set())
+  const [readIds, setReadIds] = useState<Set<string>>(() => loadReadIds())
   const rootRef = useRef<HTMLDivElement>(null)
 
   // ปิด dropdown เมื่อคลิกที่อื่นในหน้า หรือกด Esc
@@ -37,13 +47,10 @@ export function Bell({ items, unread: serverUnread }: { items: NotificationItem[
     }
   }, [open])
 
-  // โหลดสถานะ "อ่านแล้ว" จาก localStorage หลัง mount (กัน hydration mismatch)
+  // Flip to client-only counts after hydration so localStorage does not affect SSR markup.
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) setReadIds(new Set(JSON.parse(raw) as string[]))
-    } catch {}
-    setMounted(true)
+    const id = window.setTimeout(() => setMounted(true), 0)
+    return () => window.clearTimeout(id)
   }, [])
 
   function persist(next: Set<string>) {

@@ -1,17 +1,19 @@
-import { redirect } from 'next/navigation'
 import { getAppConfig } from '@/lib/data/config'
 import { getCurrentUser } from '@/lib/auth/session'
-import { canManageMembers } from '@/lib/domain/permissions'
+import { canAccessPage, canManageMembers } from '@/lib/domain/permissions'
 import { setDepartmentsAction, setHolidaysAction, setKanbanColumnsAction } from '@/app/actions/config'
 import { ListEditor } from '@/components/admin/ListEditor'
 import { WeightsEditor } from '@/components/admin/WeightsEditor'
 import { DataTools } from '@/components/admin/DataTools'
+import { NoAccess } from '@/components/layout/NoAccess'
 
 export const dynamic = 'force-dynamic'
 
 export default async function ControlDataPage() {
   const user = await getCurrentUser()
-  if (!user || !canManageMembers(user)) redirect('/')
+  if (!user) return null
+  if (!canAccessPage(user, 'control')) return <NoAccess user={user} />
+  const canEdit = canManageMembers(user)
 
   const config = await getAppConfig()
 
@@ -20,6 +22,7 @@ export default async function ControlDataPage() {
       <header className="animate-rise mb-5">
         <h1 className="text-lg font-semibold text-gray-900 sm:text-xl">Control Data</h1>
         <p className="text-xs text-gray-500">ศูนย์ควบคุมข้อมูลหลักของเว็บ — แก้แล้วมีผลทันทีทุกหน้า (เฉพาะ Admin)</p>
+        {!canEdit && <span className="mt-2 inline-flex rounded-md bg-gray-100 px-2 py-1 text-[11px] text-gray-500">Read-only</span>}
       </header>
 
       <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr))]">
@@ -28,7 +31,7 @@ export default async function ControlDataPage() {
           desc="แผนกที่เลือกได้ในโปรเจกต์ + ใช้คิด Department load ในคะแนน"
           badge={`${config.departments.length} แผนก`}
         >
-          <ListEditor initial={config.departments} onSave={setDepartmentsAction} placeholder="เช่น Digital, Airport…" />
+          <ListEditor initial={config.departments} onSave={setDepartmentsAction} placeholder="เช่น Digital, Airport…" readOnly={!canEdit} />
         </Section>
 
         <Section
@@ -36,7 +39,7 @@ export default async function ControlDataPage() {
           desc="น้ำหนักคำนวณคะแนน Individual Performance (ต่อโปรเจกต์)"
           badge="ปรับสด"
         >
-          <WeightsEditor initial={config.weights} />
+          <WeightsEditor initial={config.weights} readOnly={!canEdit} />
         </Section>
 
         <Section
@@ -44,7 +47,7 @@ export default async function ControlDataPage() {
           desc="วันที่ถูกตัดออกจากการนับ 'วันทำการ' (นอกเหนือ ส.-อา.)"
           badge={`${config.holidays.length} วัน`}
         >
-          <ListEditor initial={config.holidays} onSave={setHolidaysAction} placeholder="YYYY-MM-DD" inputType="date" mono />
+          <ListEditor initial={config.holidays} onSave={setHolidaysAction} placeholder="YYYY-MM-DD" inputType="date" mono readOnly={!canEdit} />
         </Section>
 
         <Section
@@ -52,11 +55,11 @@ export default async function ControlDataPage() {
           desc="คอลัมน์ตั้งต้นเมื่อสร้างโปรเจกต์ใหม่ (เรียงจากซ้าย→ขวา)"
           badge={`${config.kanbanColumns.length} คอลัมน์`}
         >
-          <ListEditor initial={config.kanbanColumns} onSave={setKanbanColumnsAction} placeholder="เช่น To Do, Review…" />
+          <ListEditor initial={config.kanbanColumns} onSave={setKanbanColumnsAction} placeholder="เช่น To Do, Review…" readOnly={!canEdit} />
         </Section>
 
         <Section title="เครื่องมือข้อมูล (Data Tools)" desc="จัดการ cache และเข้าถึงฐานข้อมูลต้นทาง" badge="Ops">
-          <DataTools />
+          <DataTools readOnly={!canEdit} />
         </Section>
       </div>
     </main>

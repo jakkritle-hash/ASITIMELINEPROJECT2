@@ -12,7 +12,13 @@ describe('parse', () => {
     const u = parseUser({ id: 'u1', email: 'a@x', name: 'A', role: 'Admin', avatarColor: '#000', active: 'true', createdAt: '' })
     expect(u.active).toBe(true)
     expect(u.role).toBe('Admin')
+    expect(u.pageAccess).toEqual([])
     expect(parseUser({ id: 'u2', email: '', name: '', role: '', avatarColor: '', active: 'false', createdAt: '' }).active).toBe(false)
+  })
+  it('parseUser รองรับ pageAccess และ fallback จาก pageDenied เก่า', () => {
+    expect(parseUser({ id: 'u1', email: '', name: '', role: 'Member', avatarColor: '', active: 'true', createdAt: '', pageAccess: 'dashboard,members' }).pageAccess).toEqual(['dashboard', 'members'])
+    expect(parseUser({ id: 'u2', email: '', name: '', role: 'Member', avatarColor: '', active: 'true', createdAt: '', pageDenied: 'performance' }).pageAccess).toEqual(['dashboard'])
+    expect(parseUser({ id: 'u3', email: '', name: '', role: 'Member', avatarColor: '', active: 'true', createdAt: '', pageDenied: 'dashboard,performance' }).pageAccess).toEqual(['__none__'])
   })
   it('parseProject/parseTask แปลง csv → array และตัวเลข', () => {
     const p = parseProject({ id: 'p1', name: 'P', teamId: 't1', memberIds: 'u1,u2', ownerUserId: 'u1', startDate: '', dueDate: '', status: 'at-risk', description: '', kanbanColumns: 'To Do,Done', createdAt: '', updatedAt: '' })
@@ -32,6 +38,7 @@ describe('serialize (round-trip)', () => {
   })
   it('serializeUser/serializeTask แปลงชนิดกลับเป็น string', () => {
     expect(serializeUser(parseUser({ id: 'u1', email: '', name: '', role: 'Member', avatarColor: '', active: 'true', createdAt: '' })).active).toBe('true')
+    expect(serializeUser(parseUser({ id: 'u1', email: '', name: '', role: 'Member', avatarColor: '', active: 'true', createdAt: '', pageAccess: 'dashboard,members' })).pageAccess).toBe('dashboard,members')
     expect(serializeTask(parseTask({ id: 'k1', projectId: '', title: '', assigneeId: '', columnStatus: '', startDate: '', dueDate: '', slaStatus: 'done', editCount: '5', description: '', order: '1', createdAt: '', updatedAt: '' })).editCount).toBe('5')
   })
 })

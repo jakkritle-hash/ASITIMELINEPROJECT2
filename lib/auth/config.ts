@@ -34,7 +34,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         // @ts-expect-error — เพิ่มฟิลด์ custom ลง session
         session.user.id = token.userId
-        // @ts-expect-error
+        // @ts-expect-error custom session role from JWT callback
         session.user.role = token.role
       }
       return session

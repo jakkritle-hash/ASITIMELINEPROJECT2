@@ -1,15 +1,15 @@
 import { describe, it, expect } from 'vitest'
-import { canEditProject, canManageMembers, canEditTask, canAccessPage, accessiblePageKeys } from './permissions'
+import { PAGE_ACCESS_NONE, canEditProject, canManageMembers, canEditTask, canAccessPage, accessiblePageKeys, effectivePageAccess, normalizePageAccess } from './permissions'
 import type { User, Project, Task } from './types'
 
-const admin: User = { id: 'u1', email: 'a@x.co', name: 'A', role: 'Admin', avatarColor: '#000', active: true, createdAt: '', pageDenied: [] }
+const admin: User = { id: 'u1', email: 'a@x.co', name: 'A', role: 'Admin', avatarColor: '#000', active: true, createdAt: '', pageAccess: [] }
 const manager: User = { ...admin, id: 'u2', role: 'Manager' }
 const member: User = { ...admin, id: 'u3', role: 'Member' }
 
 const project: Project = {
   id: 'p1', name: 'P', teamId: 't1', memberIds: ['u3'], ownerUserId: 'u3',
   startDate: '2026-07-01', dueDate: '2026-07-31', status: 'on-track',
-  description: '', kanbanColumns: ['To Do', 'Done'], departments: [], createdAt: '', updatedAt: '',
+  description: '', kanbanColumns: ['To Do', 'Done'], departments: [], archived: false, createdAt: '', updatedAt: '',
 }
 const task: Task = {
   id: 'k1', projectId: 'p1', title: 'T', assigneeId: 'u3', columnStatus: 'To Do',
@@ -60,10 +60,23 @@ describe('canAccessPage', () => {
     expect(canAccessPage(member, 'members')).toBe(false)
     expect(canAccessPage(member, 'control')).toBe(false)
   })
-  it('Member ที่ถูกปิดสิทธิ์ performance เข้า performance ไม่ได้ แต่ dashboard ได้', () => {
-    const restricted: User = { ...member, pageDenied: ['performance'] }
+  it('Member ที่มี allow-list เฉพาะ dashboard เข้า performance ไม่ได้ แต่ dashboard ได้', () => {
+    const restricted: User = { ...member, pageAccess: ['dashboard'] }
     expect(canAccessPage(restricted, 'performance')).toBe(false)
     expect(canAccessPage(restricted, 'dashboard')).toBe(true)
+  })
+  it('Member เข้า admin page ได้เมื่ออยู่ใน allow-list', () => {
+    const viewer: User = { ...member, pageAccess: ['dashboard', 'members', 'control'] }
+    expect(canAccessPage(viewer, 'members')).toBe(true)
+    expect(canAccessPage(viewer, 'control')).toBe(true)
+    expect(canManageMembers(viewer)).toBe(false)
+  })
+  it('sentinel ปิดทุกหน้าและ normalize ค่าที่บันทึก', () => {
+    const blocked: User = { ...member, pageAccess: [PAGE_ACCESS_NONE] }
+    expect(effectivePageAccess(blocked)).toEqual([])
+    expect(accessiblePageKeys(blocked)).toEqual([])
+    expect(normalizePageAccess([])).toEqual([PAGE_ACCESS_NONE])
+    expect(normalizePageAccess(['dashboard', 'dashboard', 'unknown'])).toEqual(['dashboard'])
   })
   it('accessiblePageKeys: Member = หน้าเนื้อหา, Admin = ทุกหน้า', () => {
     expect(accessiblePageKeys(member)).toEqual(['dashboard', 'performance'])

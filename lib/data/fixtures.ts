@@ -1,11 +1,11 @@
 import type { User, Team, Project, Task } from '@/lib/domain/types'
 
 export const FIXTURE_USERS: User[] = [
-  { id: 'u1', email: 'somchai@planbmedia.co.th', name: 'สมชาย', role: 'Manager', avatarColor: '#4f7cff', active: true, createdAt: '2026-01-01', pageDenied: [] },
-  { id: 'u2', email: 'manee@planbmedia.co.th', name: 'มานี', role: 'Member', avatarColor: '#22b07d', active: true, createdAt: '2026-01-01', pageDenied: [] },
-  { id: 'u3', email: 'piti@planbmedia.co.th', name: 'ปิติ', role: 'Member', avatarColor: '#ef5da8', active: true, createdAt: '2026-01-01', pageDenied: ['performance'] },
-  { id: 'u4', email: 'anong@planbmedia.co.th', name: 'อนงค์', role: 'Member', avatarColor: '#8a63d2', active: true, createdAt: '2026-01-01', pageDenied: [] },
-  { id: 'u5', email: 'wina@planbmedia.co.th', name: 'วีณา', role: 'Member', avatarColor: '#f5a623', active: true, createdAt: '2026-01-01', pageDenied: [] },
+  { id: 'u1', email: 'somchai@planbmedia.co.th', name: 'สมชาย', role: 'Manager', avatarColor: '#4f7cff', active: true, createdAt: '2026-01-01', pageAccess: [] },
+  { id: 'u2', email: 'manee@planbmedia.co.th', name: 'มานี', role: 'Member', avatarColor: '#22b07d', active: true, createdAt: '2026-01-01', pageAccess: [] },
+  { id: 'u3', email: 'piti@planbmedia.co.th', name: 'ปิติ', role: 'Member', avatarColor: '#ef5da8', active: true, createdAt: '2026-01-01', pageAccess: ['dashboard'] },
+  { id: 'u4', email: 'anong@planbmedia.co.th', name: 'อนงค์', role: 'Member', avatarColor: '#8a63d2', active: true, createdAt: '2026-01-01', pageAccess: [] },
+  { id: 'u5', email: 'wina@planbmedia.co.th', name: 'วีณา', role: 'Member', avatarColor: '#f5a623', active: true, createdAt: '2026-01-01', pageAccess: [] },
 ]
 
 export const FIXTURE_TEAMS: Team[] = [

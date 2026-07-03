@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { computePerformance, projectScore, type PerfTask, type PerfProject } from './performance'
 import type { User } from './types'
 
-const u = (id: string): User => ({ id, email: `${id}@x`, name: id, role: 'Member', avatarColor: '#000', active: true, createdAt: '', pageDenied: [] })
+const u = (id: string): User => ({ id, email: `${id}@x`, name: id, role: 'Member', avatarColor: '#000', active: true, createdAt: '', pageAccess: [] })
 const users = [u('u1'), u('u2')]
 
 const task = (assigneeId: string, projectId: string, columnStatus: string, slaStatus: PerfTask['slaStatus'], workingDays: number): PerfTask => ({ assigneeId, projectId, columnStatus, slaStatus, workingDays })

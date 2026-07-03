@@ -1,5 +1,12 @@
 import { getSheetsClient, getSheetId } from './client'
 import { TAB_HEADERS, type TabName } from './schema'
+import { CONTENT_PAGES } from '@/lib/domain/pages'
+
+const PAGE_ACCESS_NONE = '__none__'
+const CONTENT_KEYS = CONTENT_PAGES.map((p) => p.key)
+
+const csvToArr = (s: string): string[] => (s ? s.split(',').map((x) => x.trim()).filter(Boolean) : [])
+const arrToCsv = (a: string[] = []): string => a.join(',')
 
 export function rowsToObjects(values: string[][]): Record<string, string>[] {
   if (!values || values.length < 2) return []
@@ -13,6 +20,61 @@ export function rowsToObjects(values: string[][]): Record<string, string>[] {
   })
 }
 
+export function migrateUsersPageAccessValues(values: string[][]): { values: string[][]; migrated: boolean } {
+  if (!values || values.length === 0) return { values, migrated: false }
+
+  const [header, ...rows] = values
+  const deniedIdx = header.indexOf('pageDenied')
+  const accessIdx = header.indexOf('pageAccess')
+  if (deniedIdx === -1 || accessIdx !== -1) return { values, migrated: false }
+
+  const nextHeader = [...header]
+  nextHeader[deniedIdx] = 'pageAccess'
+  const nextRows = rows.map((row) => {
+    const nextRow = [...row]
+    const denied = csvToArr(nextRow[deniedIdx] ?? '')
+    if (denied.length === 0) {
+      nextRow[deniedIdx] = ''
+      return nextRow
+    }
+
+    const access = CONTENT_KEYS.filter((key) => !denied.includes(key))
+    nextRow[deniedIdx] = access.length === 0 ? PAGE_ACCESS_NONE : arrToCsv(access)
+    return nextRow
+  })
+
+  return { values: [nextHeader, ...nextRows], migrated: true }
+}
+
+let usersPageAccessSchemaChecked = false
+
+async function getRawValues(tab: string): Promise<string[][]> {
+  const sheets = getSheetsClient()
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: getSheetId(),
+    range: tab,
+  })
+  return (res.data.values as string[][]) ?? []
+}
+
+async function ensureUsersPageAccessSchema(): Promise<void> {
+  if (usersPageAccessSchemaChecked) return
+
+  const values = await getRawValues('Users')
+  const migration = migrateUsersPageAccessValues(values)
+  if (migration.migrated) {
+    const sheets = getSheetsClient()
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: getSheetId(),
+      range: 'Users!A1',
+      valueInputOption: 'RAW',
+      requestBody: { values: migration.values },
+    })
+  }
+
+  usersPageAccessSchemaChecked = true
+}
+
 export function objectToRow(obj: Record<string, unknown>, header: string[]): string[] {
   return header.map((key) => {
     const v = obj[key]
@@ -22,12 +84,8 @@ export function objectToRow(obj: Record<string, unknown>, header: string[]): str
 
 /** อ่านทั้ง tab แบบสด (ไม่ cache) — ใช้ในการเขียน/หาแถว เพื่อความถูกต้อง */
 export async function getTab(tab: string): Promise<Record<string, string>[]> {
-  const sheets = getSheetsClient()
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: getSheetId(),
-    range: tab,
-  })
-  return rowsToObjects((res.data.values as string[][]) ?? [])
+  if (tab === 'Users') await ensureUsersPageAccessSchema()
+  return rowsToObjects(await getRawValues(tab))
 }
 
 // ---- Cache แบบ TTL ระดับ module (กัน rate limit ของ Sheets API) ----
@@ -62,6 +120,7 @@ export async function getTabCached(tab: string): Promise<Record<string, string>[
 /** ล้าง cache ทั้งหมด (เรียกหลังการเขียนเพื่อให้เห็นผลทันที) */
 export function invalidateSheetCache(): void {
   _cache.clear()
+  usersPageAccessSchemaChecked = false
 }
 
 /** append หนึ่งแถวต่อท้าย tab ตามลำดับ header */
@@ -172,6 +231,8 @@ export async function ensureTabsAndHeaders(): Promise<{ created: string[] }> {
     })
     created.push(...toCreate)
   }
+
+  if (existing.has('Users')) await ensureUsersPageAccessSchema()
 
   for (const tab of Object.keys(TAB_HEADERS) as TabName[]) {
     await sheets.spreadsheets.values.update({

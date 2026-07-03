@@ -8,7 +8,7 @@ import { Avatar } from '@/components/ui/Avatar'
 
 const ROLES: Role[] = ['Admin', 'Manager', 'Member']
 
-export function MembersTable({ users: initial }: { users: User[] }) {
+export function MembersTable({ users: initial, canEdit = true }: { users: User[]; canEdit?: boolean }) {
   const [users, setUsers] = useState<User[]>(initial)
 
   return (
@@ -39,7 +39,8 @@ export function MembersTable({ users: initial }: { users: User[] }) {
                   setUsers((prev) => updateUserRole(prev, u.id, role))
                   void setRoleAction(u.id, role)
                 }}
-                className="rounded-md border border-gray-200 px-2 py-1 text-xs outline-none focus:border-blue-300"
+                disabled={!canEdit}
+                className="rounded-md border border-gray-200 px-2 py-1 text-xs outline-none focus:border-blue-300 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
               >
                 {ROLES.map((r) => (
                   <option key={r} value={r}>{r}</option>
@@ -52,8 +53,10 @@ export function MembersTable({ users: initial }: { users: User[] }) {
                   setUsers((prev) => toggleUserActive(prev, u.id))
                   void toggleActiveAction(u.id)
                 }}
+                disabled={!canEdit}
                 className={
                   'rounded-md px-2.5 py-1 text-xs font-medium ' +
+                  (canEdit ? '' : 'cursor-not-allowed opacity-60 ') +
                   (u.active ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-500')
                 }
               >

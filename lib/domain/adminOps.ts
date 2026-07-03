@@ -10,10 +10,9 @@ export function toggleUserActive(users: User[], userId: string): User[] {
   return users.map((u) => (u.id === userId ? { ...u, active: !u.active } : u))
 }
 
-/** ตั้งรายการหน้าที่ "ปิดสิทธิ์" ให้ผู้ใช้ (ตัดซ้ำ) */
-export function setUserPageDenied(users: User[], userId: string, denied: string[]): User[] {
-  const clean = [...new Set(denied)]
-  return users.map((u) => (u.id === userId ? { ...u, pageDenied: clean } : u))
+/** ตั้ง allow-list สิทธิ์เห็นหน้าให้ผู้ใช้ (คาดว่า caller normalize มาแล้ว) */
+export function setUserPageAccess(users: User[], userId: string, access: string[]): User[] {
+  return users.map((u) => (u.id === userId ? { ...u, pageAccess: access } : u))
 }
 
 /** สร้างทีมใหม่ต่อท้าย (สมาชิกว่าง, ยังไม่มีหัวหน้า) */

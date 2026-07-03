@@ -12,7 +12,7 @@ const FIELDS: { key: keyof Weights; label: string; hint: string }[] = [
   { key: 'overdue', label: 'งานเลยกำหนด', hint: 'ต่อ 1 งาน (ควรติดลบ)' },
 ]
 
-export function WeightsEditor({ initial }: { initial: Weights }) {
+export function WeightsEditor({ initial, readOnly = false }: { initial: Weights; readOnly?: boolean }) {
   const [w, setW] = useState<Weights>(initial)
   const [saved, setSaved] = useState<Weights>(initial)
   const [pending, start] = useTransition()
@@ -21,6 +21,7 @@ export function WeightsEditor({ initial }: { initial: Weights }) {
   const dirty = JSON.stringify(w) !== JSON.stringify(saved)
 
   function save() {
+    if (readOnly) return
     setErr('')
     start(async () => {
       const res = await setWeightsAction(w)
@@ -40,13 +41,14 @@ export function WeightsEditor({ initial }: { initial: Weights }) {
               step="0.5"
               value={w[f.key]}
               onChange={(e) => setW({ ...w, [f.key]: Number(e.target.value) })}
-              className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-center font-mono text-sm outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-200/50"
+              disabled={readOnly}
+              className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-center font-mono text-sm outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-200/50 disabled:bg-gray-50 disabled:text-gray-500"
             />
             <span className="mt-1 block text-[10px] text-gray-400">{f.hint}</span>
           </label>
         ))}
       </div>
-      <div className="mt-3 flex items-center gap-3">
+      {!readOnly && <div className="mt-3 flex items-center gap-3">
         <button
           onClick={save}
           disabled={pending || !dirty}
@@ -62,7 +64,7 @@ export function WeightsEditor({ initial }: { initial: Weights }) {
           ยกเลิกการแก้ไข
         </button>
         {err && <span className="text-xs text-red-500">{err}</span>}
-      </div>
+      </div>}
     </div>
   )
 }

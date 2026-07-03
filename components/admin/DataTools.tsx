@@ -5,11 +5,12 @@ import { clearCacheAction } from '@/app/actions/config'
 
 const SHEET_ID = process.env.NEXT_PUBLIC_SHEET_ID
 
-export function DataTools() {
+export function DataTools({ readOnly = false }: { readOnly?: boolean }) {
   const [pending, start] = useTransition()
   const [msg, setMsg] = useState('')
 
   function clearCache() {
+    if (readOnly) return
     setMsg('')
     start(async () => {
       const res = await clearCacheAction()
@@ -19,13 +20,15 @@ export function DataTools() {
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <button
-        onClick={clearCache}
-        disabled={pending}
-        className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 transition hover:bg-gray-100 disabled:opacity-50"
-      >
-        🧹 {pending ? 'กำลังล้าง…' : 'ล้าง cache'}
-      </button>
+      {!readOnly && (
+        <button
+          onClick={clearCache}
+          disabled={pending}
+          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 transition hover:bg-gray-100 disabled:opacity-50"
+        >
+          🧹 {pending ? 'กำลังล้าง…' : 'ล้าง cache'}
+        </button>
+      )}
       {SHEET_ID && (
         <a
           href={`https://docs.google.com/spreadsheets/d/${SHEET_ID}`}
