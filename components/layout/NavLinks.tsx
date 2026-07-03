@@ -17,6 +17,7 @@ export function NavLinks({ allowed }: { allowed: string[] }) {
           <Link
             key={l.href}
             href={l.href}
+            prefetch={false}
             aria-current={active ? 'page' : undefined}
             className={`relative shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium transition ${
               active ? 'text-indigo-700' : 'text-slate-500 hover:bg-indigo-50/70 hover:text-indigo-700'
