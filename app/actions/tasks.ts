@@ -43,6 +43,12 @@ function recomputeSla(task: Task): Task {
   return { ...task, slaStatus: computeSlaStatus({ dueDate: task.dueDate, isDone, now: new Date(), tz: TZ, atRiskDays: AT_RISK_DAYS }) }
 }
 
+/** วันปิดงาน: ตั้งเมื่อเข้าคอลัมน์ Done (คงค่าเดิมถ้าปิดอยู่แล้ว), ล้างเมื่อออกจาก Done */
+function completedAtFor(columnStatus: string, prev: string | undefined, nowIso: string): string {
+  if (columnStatus.toLowerCase() !== 'done') return ''
+  return prev || nowIso.slice(0, 10)
+}
+
 export interface NewTaskInput {
   title: string
   assigneeId: string
@@ -85,6 +91,7 @@ export async function createTaskAction(projectId: string, input: NewTaskInput): 
     order: maxOrder + 1,
     createdAt: now,
     updatedAt: now,
+    completedAt: completedAtFor(firstColumn, '', now),
   }
   await appendRows('Tasks', [serializeTask(task)], HEADER)
   await appendRows('ActivityLog', [serializeLog({
@@ -113,7 +120,7 @@ export async function editTaskAction(taskId: string, changes: Partial<Task>, exp
   const now = new Date().toISOString()
   const { task: edited, logs } = applyTaskEdit(ctx.task, changes, user.id, now)
   if (logs.length === 0) return { ok: true }
-  const final = recomputeSla(edited)
+  const final = recomputeSla({ ...edited, completedAt: completedAtFor(edited.columnStatus, ctx.task.completedAt, now) })
   await updateRowById('Tasks', taskId, serializeTask(final), HEADER)
   await appendRows('ActivityLog', logs.map(serializeLog), LOG_HEADER)
   revalidatePath(`/projects/${ctx.project.id}`)
@@ -157,7 +164,7 @@ export async function moveTaskAction(taskId: string, toColumn: string): Promise<
 
   const now = new Date().toISOString()
   const log = makeMoveLog(ctx.task, toColumn, user.id, now)
-  const moved = recomputeSla({ ...ctx.task, columnStatus: toColumn, updatedAt: now })
+  const moved = recomputeSla({ ...ctx.task, columnStatus: toColumn, updatedAt: now, completedAt: completedAtFor(toColumn, ctx.task.completedAt, now) })
   await updateRowById('Tasks', taskId, serializeTask(moved), HEADER)
   await appendRows('ActivityLog', [serializeLog(log)], LOG_HEADER)
   revalidatePath(`/projects/${ctx.project.id}`)

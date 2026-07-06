@@ -48,6 +48,7 @@ export function migrateUsersPageAccessValues(values: string[][]): { values: stri
 
 let usersPageAccessSchemaChecked = false
 let projectsKindSchemaChecked = false
+let tasksCompletedAtSchemaChecked = false
 
 async function getRawValues(tab: string): Promise<string[][]> {
   const sheets = getSheetsClient()
@@ -94,6 +95,23 @@ async function ensureProjectsKindSchema(): Promise<void> {
   projectsKindSchemaChecked = true
 }
 
+/** เติมคอลัมน์ header 'completedAt' ให้ Tasks ถ้ายังไม่มี (ใช้คิดวันปิดงาน/ความล่าช้า) */
+async function ensureTasksCompletedAtSchema(): Promise<void> {
+  if (tasksCompletedAtSchemaChecked) return
+  const values = await getRawValues('Tasks')
+  const header = values[0] ?? []
+  if (header.length > 0 && !header.includes('completedAt')) {
+    const sheets = getSheetsClient()
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: getSheetId(),
+      range: 'Tasks!A1',
+      valueInputOption: 'RAW',
+      requestBody: { values: [[...header, 'completedAt']] },
+    })
+  }
+  tasksCompletedAtSchemaChecked = true
+}
+
 export function objectToRow(obj: Record<string, unknown>, header: string[]): string[] {
   return header.map((key) => {
     const v = obj[key]
@@ -105,6 +123,7 @@ export function objectToRow(obj: Record<string, unknown>, header: string[]): str
 export async function getTab(tab: string): Promise<Record<string, string>[]> {
   if (tab === 'Users') await ensureUsersPageAccessSchema()
   if (tab === 'Projects') await ensureProjectsKindSchema()
+  if (tab === 'Tasks') await ensureTasksCompletedAtSchema()
   return rowsToObjects(await getRawValues(tab))
 }
 
@@ -142,6 +161,7 @@ export function invalidateSheetCache(): void {
   _cache.clear()
   usersPageAccessSchemaChecked = false
   projectsKindSchemaChecked = false
+  tasksCompletedAtSchemaChecked = false
 }
 
 /** append หนึ่งแถวต่อท้าย tab ตามลำดับ header */

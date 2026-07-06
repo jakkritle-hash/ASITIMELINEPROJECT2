@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { workingDaysBetween } from './workingDays'
+import { workingDaysBetween, lateWorkingDays } from './workingDays'
 
 describe('workingDaysBetween', () => {
   it('วันเดียว (จ.) = 1', () => {
@@ -19,5 +19,19 @@ describe('workingDaysBetween', () => {
   })
   it('end < start = 0', () => {
     expect(workingDaysBetween('2026-07-10', '2026-07-06')).toBe(0)
+  })
+})
+
+describe('lateWorkingDays', () => {
+  it('ปิดตรงเวลา/ก่อนกำหนด = 0', () => {
+    expect(lateWorkingDays('2026-07-10', '2026-07-10')).toBe(0) // ปิดวันครบกำหนดพอดี
+    expect(lateWorkingDays('2026-07-10', '2026-07-08')).toBe(0) // ปิดก่อน
+  })
+  it('ปิดช้า: ครบ ศ.10 ก.ค. ปิด อ.14 = 2 วันทำการ (ตัด ส.11/อา.12)', () => {
+    expect(lateWorkingDays('2026-07-10', '2026-07-14')).toBe(2)
+  })
+  it('ข้อมูลไม่ครบ = 0', () => {
+    expect(lateWorkingDays('', '2026-07-14')).toBe(0)
+    expect(lateWorkingDays('2026-07-10', '')).toBe(0)
   })
 })

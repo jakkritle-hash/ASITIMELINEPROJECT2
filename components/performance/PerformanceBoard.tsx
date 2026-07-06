@@ -128,7 +128,7 @@ export function PerformanceBoard({
                       <div key={ps.projectId} className="flex items-center gap-2 text-[11px]">
                         <span className="truncate text-gray-600" title={projectNames[ps.projectId] ?? ps.projectId}>{projectNames[ps.projectId] ?? ps.projectId}</span>
                         <span className="rounded bg-indigo-50 px-1 py-0.5 text-[9px] font-medium text-indigo-500" title="จำนวน Department">{ps.deptCount} dept</span>
-                        {ps.overdue > 0 && <span className="rounded bg-red-50 px-1 py-0.5 text-[9px] font-medium text-red-500">เลย {ps.overdue}</span>}
+                        {ps.lateDays > 0 && <span className="rounded bg-red-50 px-1 py-0.5 text-[9px] font-medium text-red-500" title="วันทำการที่ล่าช้า (หักคะแนน)">ช้า {ps.lateDays} วัน</span>}
                         <span className="ml-auto shrink-0 font-mono font-semibold text-gray-700">{ps.score}</span>
                       </div>
                     ))}

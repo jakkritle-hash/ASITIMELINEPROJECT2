@@ -66,6 +66,8 @@ export interface Task {
   order: number
   createdAt: string
   updatedAt: string
+  /** วันที่ปิดงาน (YYYY-MM-DD) — บันทึกตอนย้ายเข้าคอลัมน์ Done; ใช้คิด "ล่าช้ากี่วัน" */
+  completedAt?: string
 }
 
 export type LogAction = 'create' | 'update' | 'move' | 'delete'

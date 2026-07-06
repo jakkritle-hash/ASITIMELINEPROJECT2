@@ -10,7 +10,7 @@ const FIELDS: { key: keyof Weights; label: string; short: string; hint: string }
   { key: 'taskDone', label: 'งานส่งตรงเวลา', short: 'Done', hint: 'ต่อ 1 งานที่ปิดจบ' },
   { key: 'onTimeRate', label: 'อัตราตรงเวลา %', short: 'OnTime%', hint: 'ต่อ 1% ในโปรเจกต์' },
   { key: 'workingDays', label: 'วันทำการ', short: 'Days', hint: 'ต่อ 1 วัน' },
-  { key: 'overdue', label: 'งานเลยกำหนด', short: 'Overdue', hint: 'ต่อ 1 งาน (ควรติดลบ)' },
+  { key: 'overdue', label: 'ล่าช้า/วัน', short: 'Late/d', hint: 'ต่อ 1 วันทำการที่ล่าช้า (ติดลบ)' },
 ]
 
 export function WeightsEditor({ initial, kind = 'main', readOnly = false }: { initial: Weights; kind?: WeightKind; readOnly?: boolean }) {

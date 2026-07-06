@@ -6,6 +6,8 @@ export interface PerfTask {
   columnStatus: string
   slaStatus: SlaStatus
   workingDays: number
+  /** วันทำการที่ล่าช้าของงานนี้ (ปิดช้า หรือยังไม่ปิดแต่เลยกำหนด) — 0 ถ้าตรงเวลา */
+  lateDays: number
 }
 export interface PerfProject {
   id: string
@@ -19,9 +21,10 @@ export interface ProjectScore {
   deptCount: number
   taskTotal: number
   taskDone: number
-  overdue: number
+  /** ผลรวมวันทำการที่ล่าช้าในโปรเจกต์นี้ (ใช้คิด penalty แบบไล่ตามวัน) */
+  lateDays: number
   workingDays: number
-  /** อัตราส่งตรงเวลาในโปรเจกต์นี้ (งานปิดจบ / งานที่รับในโปรเจกต์) 0–100 */
+  /** อัตราส่ง "ตรงเวลา" ในโปรเจกต์นี้ (งานที่ปิดและไม่ล่าช้า / งานที่รับ) 0–100 */
   onTimeRate: number
   score: number
 }
@@ -55,26 +58,26 @@ export interface Weights {
 /** น้ำหนักคะแนนตั้งต้น — ปรับ runtime ได้ในหน้า Control Data (เก็บใน Config tab) */
 export const WEIGHTS: Weights = {
   departmentLoad: 15, // ← น้ำหนักสูงสุด: จำนวน Department ที่โปรเจกต์นี้ใช้
-  taskDone: 10, // งานที่ปิดจบจริง (ส่งตรงเวลา)
+  taskDone: 10, // งานที่ปิดจบจริง
   onTimeRate: 0.5, // อัตราตรงเวลาในโปรเจกต์นี้ (ความน่าเชื่อถือ)
   workingDays: 1, // วันทำการที่ลงแรงในโปรเจกต์นี้
-  overdue: -8, // penalty งานเลยกำหนด
+  overdue: -8, // penalty ต่อ 1 "วันทำการที่ล่าช้า" (ยิ่งช้ายิ่งหักมาก)
 }
 
 /**
  * คะแนนของ "หนึ่งโปรเจกต์" ที่บุคคลรับ:
- *   projectScore = deptCount×15 + taskDone×10 + onTimeRate×0.5 + workingDays×1 − overdue×8
+ *   projectScore = deptCount×15 + taskDone×10 + onTimeRate×0.5 + workingDays×1 − lateDays×8
  *
+ * lateDays = ผลรวม "วันทำการที่ล่าช้า" (ปิดช้า/ยังไม่ปิดแต่เลยกำหนด) — หักตามจำนวนวันจริง
  * คะแนนรวมของบุคคล = ผลบวกของ projectScore ทุกโปรเจกต์ที่เขาเกี่ยวข้อง
- * (คิดแยกทีละโปรเจกต์แล้วเอามารวมกัน)
  */
-export function projectScore(p: Pick<ProjectScore, 'deptCount' | 'taskDone' | 'onTimeRate' | 'workingDays' | 'overdue'>, w: Weights = WEIGHTS): number {
+export function projectScore(p: Pick<ProjectScore, 'deptCount' | 'taskDone' | 'onTimeRate' | 'workingDays' | 'lateDays'>, w: Weights = WEIGHTS): number {
   return Math.round(
     p.deptCount * w.departmentLoad +
       p.taskDone * w.taskDone +
       p.onTimeRate * w.onTimeRate +
       p.workingDays * w.workingDays +
-      p.overdue * w.overdue,
+      p.lateDays * w.overdue,
   )
 }
 
@@ -95,10 +98,12 @@ export function computePerformance(users: User[], tasks: PerfTask[], projects: P
         const inProj = mine.filter((t) => t.projectId === pid)
         const deptCount = deptCountById.get(pid) ?? 0
         const taskDone = inProj.filter((t) => t.columnStatus.toLowerCase() === 'done').length
-        const overdue = inProj.filter((t) => t.slaStatus === 'overdue').length
+        // ตรงเวลา = ปิดงานแล้วและไม่ล่าช้า ; lateDays = ผลรวมวันที่ล่าช้าของทุกงาน
+        const onTimeDone = inProj.filter((t) => t.columnStatus.toLowerCase() === 'done' && t.lateDays === 0).length
+        const lateDays = inProj.reduce((s, t) => s + t.lateDays, 0)
         const workingDays = inProj.reduce((s, t) => s + t.workingDays, 0)
-        const onTimeRate = inProj.length ? Math.round((taskDone / inProj.length) * 100) : 0
-        return { projectId: pid, deptCount, taskTotal: inProj.length, taskDone, overdue, workingDays, onTimeRate, score: projectScore({ deptCount, taskDone, onTimeRate, workingDays, overdue }, weights) }
+        const onTimeRate = inProj.length ? Math.round((onTimeDone / inProj.length) * 100) : 0
+        return { projectId: pid, deptCount, taskTotal: inProj.length, taskDone, lateDays, workingDays, onTimeRate, score: projectScore({ deptCount, taskDone, onTimeRate, workingDays, lateDays }, weights) }
       })
       // เรียงโปรเจกต์คะแนนมาก→น้อยเพื่อโชว์
       projectScores.sort((a, b) => b.score - a.score)

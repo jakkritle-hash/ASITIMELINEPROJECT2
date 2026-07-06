@@ -15,3 +15,14 @@ export function workingDaysBetween(start: string, end: string, holidays: string[
     (d) => !isWeekend(d) && !holidaySet.has(format(d, 'yyyy-MM-dd')),
   ).length
 }
+
+/**
+ * จำนวน "วันทำการที่ล่าช้า" เทียบกับวันครบกำหนด
+ * - งานที่ปิดแล้ว: ใช้วันปิด (completedAt); งานที่ยังไม่ปิด: ใช้วันนี้ (today) → ยิ่งดองยิ่งเพิ่ม
+ * - คืน 0 ถ้าไม่เลยกำหนด / ข้อมูลไม่ครบ (นับเฉพาะวันทำการหลังวันครบกำหนด)
+ */
+export function lateWorkingDays(dueDate: string, refDate: string, holidays: string[] = []): number {
+  if (!dueDate || !refDate || refDate <= dueDate) return 0
+  // นับวันทำการช่วง (วันถัดจากครบกำหนด .. วันอ้างอิง) — ตัดวันครบกำหนดออก
+  return Math.max(0, workingDaysBetween(dueDate, refDate, holidays) - 1)
+}

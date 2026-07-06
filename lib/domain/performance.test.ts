@@ -5,12 +5,12 @@ import type { User } from './types'
 const u = (id: string): User => ({ id, email: `${id}@x`, name: id, role: 'Member', avatarColor: '#000', active: true, createdAt: '', pageAccess: [] })
 const users = [u('u1'), u('u2')]
 
-const task = (assigneeId: string, projectId: string, columnStatus: string, slaStatus: PerfTask['slaStatus'], workingDays: number): PerfTask => ({ assigneeId, projectId, columnStatus, slaStatus, workingDays })
+const task = (assigneeId: string, projectId: string, columnStatus: string, slaStatus: PerfTask['slaStatus'], workingDays: number, lateDays = 0): PerfTask => ({ assigneeId, projectId, columnStatus, slaStatus, workingDays, lateDays })
 
 const tasks: PerfTask[] = [
   task('u1', 'p1', 'Done', 'done', 5),
   task('u1', 'p1', 'In Progress', 'at-risk', 3),
-  task('u1', 'p2', 'To Do', 'overdue', 2),
+  task('u1', 'p2', 'To Do', 'overdue', 2, 1), // เลยกำหนด 1 วันทำการ
   task('u2', 'p1', 'Done', 'done', 4),
 ]
 const projects: PerfProject[] = [
@@ -38,8 +38,8 @@ describe('computePerformance', () => {
     expect(s2.departmentLoad).toBe(5)
   })
   it('คิดคะแนนแยกทีละโปรเจกต์แล้วรวมกัน (score รวม = Σ projectScores)', () => {
-    // u1/p1: dept2×15 + done1×10 + onTime50×0.5 + wd8 − overdue0×8 = 30+10+25+8 = 73
-    // u1/p2: dept1×15 + done0 + onTime0 + wd2 − overdue1×8 = 15+2−8 = 9
+    // u1/p1: dept2×15 + done1×10 + onTime50×0.5 + wd8 − late0×8 = 30+10+25+8 = 73
+    // u1/p2: dept1×15 + done0 + onTime0 + wd2 − late1×8 = 15+2−8 = 9
     const p1 = s1.projectScores.find((p) => p.projectId === 'p1')!
     const p2 = s1.projectScores.find((p) => p.projectId === 'p2')!
     expect(p1.score).toBe(73)
@@ -49,14 +49,16 @@ describe('computePerformance', () => {
     expect(s2.score).toBe(94 + 45) // 139
     expect(s2.score).toBe(s2.projectScores.reduce((a, b) => a + b.score, 0))
   })
-  it('projectScore: department เป็นน้ำหนักสูงสุด + หัก overdue', () => {
-    // overdue ทำให้คะแนนโปรเจกต์ต่ำกว่า
-    const clean = projectScore({ deptCount: 2, taskDone: 2, onTimeRate: 100, workingDays: 5, overdue: 0 })
-    const late = projectScore({ deptCount: 2, taskDone: 2, onTimeRate: 100, workingDays: 5, overdue: 2 })
-    expect(clean).toBeGreaterThan(late)
+  it('projectScore: department เป็นน้ำหนักสูงสุด + หักตามวันที่ล่าช้า', () => {
+    // ยิ่งล่าช้าหลายวัน คะแนนยิ่งต่ำ (หักแบบไล่ตามวัน)
+    const clean = projectScore({ deptCount: 2, taskDone: 2, onTimeRate: 100, workingDays: 5, lateDays: 0 })
+    const late2 = projectScore({ deptCount: 2, taskDone: 2, onTimeRate: 100, workingDays: 5, lateDays: 2 })
+    const late5 = projectScore({ deptCount: 2, taskDone: 2, onTimeRate: 100, workingDays: 5, lateDays: 5 })
+    expect(clean).toBeGreaterThan(late2)
+    expect(late2).toBeGreaterThan(late5) // ช้ามากขึ้น → หักมากขึ้น
     // +1 dept (×15) ถ่วงหนักกว่า +1 งานที่ปิด (×10)
-    const moreDept = projectScore({ deptCount: 3, taskDone: 2, onTimeRate: 100, workingDays: 5, overdue: 0 })
-    const moreDone = projectScore({ deptCount: 2, taskDone: 3, onTimeRate: 100, workingDays: 5, overdue: 0 })
+    const moreDept = projectScore({ deptCount: 3, taskDone: 2, onTimeRate: 100, workingDays: 5, lateDays: 0 })
+    const moreDone = projectScore({ deptCount: 2, taskDone: 3, onTimeRate: 100, workingDays: 5, lateDays: 0 })
     expect(moreDept).toBeGreaterThan(moreDone)
   })
   it('competition ranking: คะแนนเท่ากันได้อันดับเท่ากัน', () => {
