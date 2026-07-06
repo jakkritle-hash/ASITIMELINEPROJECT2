@@ -1,5 +1,5 @@
 import { getPerformance } from '@/lib/data/performance'
-import { getPerformanceHeatmaps } from '@/lib/data/heatmap'
+import { getWorkloadHeatmaps } from '@/lib/data/heatmap'
 import { getCurrentUser } from '@/lib/auth/session'
 import { canAccessPage } from '@/lib/domain/permissions'
 import { NoAccess } from '@/components/layout/NoAccess'
@@ -13,7 +13,7 @@ export default async function PerformancePage() {
   if (!user) return null
   if (!canAccessPage(user, 'performance')) return <NoAccess user={user} />
 
-  const [{ main, expand, maintenance, projectNames }, heatmap] = await Promise.all([getPerformance(), getPerformanceHeatmaps()])
+  const [{ main, expand, maintenance, projectNames }, heatmap] = await Promise.all([getPerformance(), getWorkloadHeatmaps()])
 
   return (
     <main className="w-full px-4 py-6 sm:px-6 lg:px-8">

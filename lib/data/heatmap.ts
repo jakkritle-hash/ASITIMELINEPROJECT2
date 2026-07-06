@@ -1,57 +1,65 @@
-import { format, subDays } from 'date-fns'
+import { eachDayOfInterval, format } from 'date-fns'
 import type { User } from '@/lib/domain/types'
 import { buildWeeks } from '@/lib/domain/heatmap'
-import { getTabCached } from '@/lib/sheets/repository'
-import { parseLog } from '@/lib/sheets/schema'
+import { getDashboardData } from './dashboard'
 import { getAdminData } from './admin'
-import { sheetsConfigured } from './dashboard'
-
-const WEEKS_BACK = 18 // ~4 เดือนล่าสุด
 
 export interface UserHeat {
   user: User
-  counts: Record<string, number> // 'yyyy-MM-dd' → จำนวนการเคลื่อนไหว
-  total: number
-  max: number
+  counts: Record<string, number> // 'yyyy-MM-dd' → จำนวนงานที่รับผิดชอบและยัง active วันนั้น
+  titles: Record<string, string[]> // ชื่องานต่อวัน (ใช้แสดงใน tooltip)
+  total: number // รวม task-days (ใช้เรียงลำดับ)
+  peak: number // จำนวนงานพร้อมกันสูงสุด
 }
 export interface HeatmapData {
-  weeks: string[][] // คอลัมน์ = สัปดาห์, 7 วันต่อสัปดาห์
+  weeks: string[][]
   users: UserHeat[]
   startDate: string
   endDate: string
+  today: string
+  globalMax: number // สเกลสีร่วม เพื่อเทียบภาระงานข้ามคนได้
 }
 
-/** heatmap ความเคลื่อนไหวรายวันของแต่ละคน (จาก Activity Log) — ช่วง ~18 สัปดาห์ล่าสุด */
-export async function getPerformanceHeatmaps(now: Date = new Date()): Promise<HeatmapData> {
-  const endDate = format(now, 'yyyy-MM-dd')
-  const startDate = format(subDays(now, WEEKS_BACK * 7 - 1), 'yyyy-MM-dd')
+/** heatmap ภาระงานรายบุคคล — แต่ละวันนับงานที่ผู้นั้นรับผิดชอบและช่วง (เริ่ม–ครบกำหนด) คร่อมวันนั้น
+ *  ช่วงเวลา = ตั้งแต่วันเริ่มงานแรกสุดถึงวันครบกำหนดท้ายสุด (เห็นทั้งอดีตและอนาคต) */
+export async function getWorkloadHeatmaps(now: Date = new Date()): Promise<HeatmapData> {
+  const [data, admin] = await Promise.all([getDashboardData(now), getAdminData()])
+  const active = admin.users.filter((u) => u.active)
+  const tasks = data.projects.flatMap((p) => p.tasks) // enriched: assigneeId, title, startDate, dueDate
+
+  const today = format(now, 'yyyy-MM-dd')
+  const starts = tasks.map((t) => t.startDate).filter(Boolean)
+  const dues = tasks.map((t) => t.dueDate).filter(Boolean)
+  const startDate = starts.length ? starts.reduce((a, b) => (a < b ? a : b)) : today
+  let endDate = dues.length ? dues.reduce((a, b) => (a > b ? a : b)) : today
+  if (endDate < startDate) endDate = startDate
   const weeks = buildWeeks(startDate, endDate)
 
-  const { users } = await getAdminData()
-  const active = users.filter((u) => u.active)
+  const perUser = new Map<string, { counts: Record<string, number>; titles: Record<string, string[]> }>()
+  for (const u of active) perUser.set(u.id, { counts: {}, titles: {} })
 
-  if (!sheetsConfigured()) {
-    return { weeks, users: active.map((u) => ({ user: u, counts: {}, total: 0, max: 0 })), startDate, endDate }
+  for (const t of tasks) {
+    const bucket = perUser.get(t.assigneeId)
+    if (!bucket || !t.startDate || !t.dueDate) continue
+    const s = new Date(t.startDate + 'T00:00:00')
+    const e = new Date(t.dueDate + 'T00:00:00')
+    if (isNaN(s.getTime()) || isNaN(e.getTime()) || e < s) continue
+    for (const day of eachDayOfInterval({ start: s, end: e })) {
+      const key = format(day, 'yyyy-MM-dd')
+      bucket.counts[key] = (bucket.counts[key] ?? 0) + 1
+      ;(bucket.titles[key] ??= []).push(t.title)
+    }
   }
 
-  const logs = (await getTabCached('ActivityLog')).map(parseLog)
-  const byUser = new Map<string, Record<string, number>>()
-  for (const l of logs) {
-    if (!l.timestamp || !l.actorId) continue
-    const d = l.timestamp.slice(0, 10) // วันที่จาก ISO timestamp
-    if (d < startDate || d > endDate) continue
-    const m = byUser.get(l.actorId) ?? {}
-    m[d] = (m[d] ?? 0) + 1
-    byUser.set(l.actorId, m)
-  }
-
-  const usersHeat: UserHeat[] = active.map((u) => {
-    const counts = byUser.get(u.id) ?? {}
-    const vals = Object.values(counts)
-    return { user: u, counts, total: vals.reduce((a, b) => a + b, 0), max: vals.length ? Math.max(...vals) : 0 }
+  let globalMax = 0
+  const users: UserHeat[] = active.map((u) => {
+    const b = perUser.get(u.id)!
+    const vals = Object.values(b.counts)
+    const peak = vals.length ? Math.max(...vals) : 0
+    globalMax = Math.max(globalMax, peak)
+    return { user: u, counts: b.counts, titles: b.titles, total: vals.reduce((a, c) => a + c, 0), peak }
   })
-  // เรียงคนที่มีความเคลื่อนไหวมากไว้บน
-  usersHeat.sort((a, b) => b.total - a.total)
+  users.sort((a, b) => b.total - a.total) // คนที่ภาระงานรวมมากไว้บน
 
-  return { weeks, users: usersHeat, startDate, endDate }
+  return { weeks, users, startDate, endDate, today, globalMax: Math.max(1, globalMax) }
 }
