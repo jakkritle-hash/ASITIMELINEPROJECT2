@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import type { Weights } from '@/lib/domain/performance'
+import type { WeightKind } from '@/lib/data/config'
 import { setWeightsAction } from '@/app/actions/config'
 
 const FIELDS: { key: keyof Weights; label: string; short: string; hint: string }[] = [
@@ -12,7 +13,7 @@ const FIELDS: { key: keyof Weights; label: string; short: string; hint: string }
   { key: 'overdue', label: 'งานเลยกำหนด', short: 'Overdue', hint: 'ต่อ 1 งาน (ควรติดลบ)' },
 ]
 
-export function WeightsEditor({ initial, readOnly = false }: { initial: Weights; readOnly?: boolean }) {
+export function WeightsEditor({ initial, kind = 'main', readOnly = false }: { initial: Weights; kind?: WeightKind; readOnly?: boolean }) {
   const [w, setW] = useState<Weights>(initial)
   const [saved, setSaved] = useState<Weights>(initial)
   const [pending, start] = useTransition()
@@ -24,7 +25,7 @@ export function WeightsEditor({ initial, readOnly = false }: { initial: Weights;
     if (readOnly) return
     setErr('')
     start(async () => {
-      const res = await setWeightsAction(w)
+      const res = await setWeightsAction(w, kind)
       if (!res.ok) setErr(res.error || 'บันทึกไม่สำเร็จ')
       else setSaved(w)
     })

@@ -35,11 +35,27 @@ export default async function ControlDataPage() {
         </Section>
 
         <Section
-          title="Scoring Weights"
-          desc="น้ำหนักคำนวณคะแนน Individual Performance (ต่อโปรเจกต์)"
+          title="Scoring Weights · Main"
+          desc="น้ำหนักคะแนน Performance ของโปรเจกต์ Main (โปรเจกต์หลัก)"
           badge="ปรับสด"
         >
-          <WeightsEditor initial={config.weights} readOnly={!canEdit} />
+          <WeightsEditor initial={config.weights} kind="main" readOnly={!canEdit} />
+        </Section>
+
+        <Section
+          title="Scoring Weights · Expand"
+          desc="น้ำหนักคะแนนของโปรเจกต์ Expand (งานต่อยอด) — คิดแยกจาก Main"
+          badge="ปรับสด"
+        >
+          <WeightsEditor initial={config.weightsExpand} kind="expand" readOnly={!canEdit} />
+        </Section>
+
+        <Section
+          title="Scoring Weights · Maintenance"
+          desc="น้ำหนักคะแนนของโปรเจกต์ Maintenance (งานดูแลรักษา) — คิดแยกจาก Main"
+          badge="ปรับสด"
+        >
+          <WeightsEditor initial={config.weightsMaintenance} kind="maintenance" readOnly={!canEdit} />
         </Section>
 
         <Section

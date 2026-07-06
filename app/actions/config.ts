@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import type { Weights } from '@/lib/domain/performance'
+import { WEIGHT_KEY, type WeightKind } from '@/lib/data/config'
 import { setConfigValue, invalidateSheetCache } from '@/lib/sheets/repository'
 import { canManageMembers } from '@/lib/domain/permissions'
 import { getCurrentUser } from '@/lib/auth/session'
@@ -58,12 +59,12 @@ export async function setKanbanColumnsAction(list: string[]): Promise<ActionResu
   return saveList('kanbanColumns', list, ['/admin/control'])
 }
 
-/** น้ำหนักคะแนน Individual Performance */
-export async function setWeightsAction(weights: Weights): Promise<ActionResult> {
+/** น้ำหนักคะแนน Individual Performance — แยกตามประเภทโปรเจกต์ (main/expand/maintenance) */
+export async function setWeightsAction(weights: Weights, kind: WeightKind = 'main'): Promise<ActionResult> {
   if (!sheetsConfigured()) return { ok: true }
   const gate = await requireAdmin()
   if (!gate.ok) return gate
-  await setConfigValue('weights', JSON.stringify(weights))
+  await setConfigValue(WEIGHT_KEY[kind], JSON.stringify(weights))
   invalidateSheetCache()
   revalidatePath('/performance')
   revalidatePath('/admin/control')

@@ -11,8 +11,15 @@ export interface AppConfig {
   departments: string[]
   holidays: string[]
   kanbanColumns: string[]
-  weights: Weights
+  /** น้ำหนักคะแนนแยกตามประเภทโปรเจกต์ */
+  weights: Weights // main
+  weightsExpand: Weights
+  weightsMaintenance: Weights
 }
+
+/** ชนิดน้ำหนัก → key ใน Config tab */
+export const WEIGHT_KEY = { main: 'weights', expand: 'weightsExpand', maintenance: 'weightsMaintenance' } as const
+export type WeightKind = keyof typeof WEIGHT_KEY
 
 const csv = (s?: string): string[] => (s ? s.split(',').map((x) => x.trim()).filter(Boolean) : [])
 
@@ -22,6 +29,8 @@ function defaults(): AppConfig {
     holidays: [...TH_HOLIDAYS],
     kanbanColumns: [...DEFAULT_KANBAN_COLUMNS],
     weights: { ...WEIGHTS },
+    weightsExpand: { ...WEIGHTS },
+    weightsMaintenance: { ...WEIGHTS },
   }
 }
 
@@ -55,6 +64,8 @@ export async function getAppConfig(): Promise<AppConfig> {
       holidays: m.holidays != null ? csv(m.holidays) : base.holidays,
       kanbanColumns: m.kanbanColumns != null ? csv(m.kanbanColumns) : base.kanbanColumns,
       weights: parseWeights(m.weights, base.weights),
+      weightsExpand: parseWeights(m.weightsExpand, base.weightsExpand),
+      weightsMaintenance: parseWeights(m.weightsMaintenance, base.weightsMaintenance),
     }
   } catch {
     return base
