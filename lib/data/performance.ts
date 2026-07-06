@@ -11,8 +11,8 @@ export interface PerformanceData {
 /** สรุปผลงานรายบุคคล (รวมทุกโปรเจกต์ทั้งที่ทำอยู่และเก็บถาวรแล้ว) */
 export async function getPerformance(): Promise<PerformanceData> {
   const [data, admin, config] = await Promise.all([getDashboardData(), getAdminData(), getAppConfig()])
-  // นับคะแนนเฉพาะโปรเจกต์ประเภท 'main' — 'expand' (งานเสริม) ไม่นับทั้งงานและ department load
-  const scored = data.projects.filter((p) => p.kind !== 'expand')
+  // นับคะแนนเฉพาะโปรเจกต์ประเภท 'main' — 'expand'/'maintenance' ไม่นับทั้งงานและ department load
+  const scored = data.projects.filter((p) => p.kind === 'main')
   const tasks = scored.flatMap((p) =>
     p.tasks.map((t) => ({
       assigneeId: t.assigneeId,

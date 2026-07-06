@@ -46,11 +46,19 @@ export function ProjectKind({ projectId, kind, canEdit }: { projectId: string; k
 
 /** ป้ายประเภทโปรเจกต์ (ใช้ซ้ำได้) */
 export function KindBadge({ kind }: { kind: Kind }) {
-  return kind === 'expand' ? (
-    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200" title="งานเสริม — ไม่นับคะแนน Performance">
-      Expand
-    </span>
-  ) : (
+  if (kind === 'expand')
+    return (
+      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200" title="งานต่อยอด — ไม่นับคะแนน Performance">
+        Expand
+      </span>
+    )
+  if (kind === 'maintenance')
+    return (
+      <span className="rounded-full bg-teal-50 px-2 py-0.5 text-[11px] font-medium text-teal-600 ring-1 ring-teal-100" title="งานดูแลรักษา — ไม่นับคะแนน Performance">
+        Maintenance
+      </span>
+    )
+  return (
     <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-600 ring-1 ring-indigo-100" title="นับคะแนน Performance">
       Main
     </span>

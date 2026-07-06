@@ -1,4 +1,5 @@
 import type { User, Team, Project, Task, ActivityLogEntry, Role, SlaStatus } from '@/lib/domain/types'
+import { toProjectKind } from '@/lib/domain/types'
 import { CONTENT_PAGES } from '@/lib/domain/pages'
 
 export const TAB_HEADERS = {
@@ -37,7 +38,7 @@ export function parseProject(r: Record<string, string>): Project {
     id: r.id, name: r.name, teamId: r.teamId, memberIds: csvToArr(r.memberIds), ownerUserId: r.ownerUserId,
     startDate: r.startDate, dueDate: r.dueDate, status: (r.status as SlaStatus) || 'on-track', description: r.description || '',
     kanbanColumns: csvToArr(r.kanbanColumns), departments: csvToArr(r.departments),
-    kind: r.kind === 'expand' ? 'expand' : 'main', // ค่าเดิมที่ไม่มีคอลัมน์ → main
+    kind: toProjectKind(r.kind), // ค่าเดิมที่ไม่มีคอลัมน์ → main
     archived: toBool(r.archived), createdAt: r.createdAt, updatedAt: r.updatedAt,
   }
 }

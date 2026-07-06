@@ -1,7 +1,12 @@
 export type Role = 'Admin' | 'Manager' | 'Member'
 export type SlaStatus = 'on-track' | 'at-risk' | 'overdue' | 'done'
-/** ประเภทโปรเจกต์: 'main' นับคะแนน Performance, 'expand' ไม่นับ (งานเสริม/ต่อยอด) */
-export type ProjectKind = 'main' | 'expand'
+/** ประเภทโปรเจกต์: 'main' นับคะแนน Performance เท่านั้น; 'expand'/'maintenance' ไม่นับ */
+export type ProjectKind = 'main' | 'expand' | 'maintenance'
+export const PROJECT_KINDS: ProjectKind[] = ['main', 'expand', 'maintenance']
+/** normalize ค่าที่รับมา → ProjectKind ที่ถูกต้อง (default 'main') */
+export function toProjectKind(v: unknown): ProjectKind {
+  return v === 'expand' || v === 'maintenance' ? v : 'main'
+}
 
 export interface User {
   id: string

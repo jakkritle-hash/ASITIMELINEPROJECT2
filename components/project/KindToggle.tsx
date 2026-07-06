@@ -2,12 +2,13 @@
 
 import type { ProjectKind } from '@/lib/domain/types'
 
-const OPTIONS: { value: ProjectKind; label: string; hint: string }[] = [
-  { value: 'main', label: 'Main', hint: 'นับคะแนน Performance' },
-  { value: 'expand', label: 'Expand', hint: 'งานเสริม — ไม่นับคะแนน' },
+const OPTIONS: { value: ProjectKind; label: string; hint: string; on: string }[] = [
+  { value: 'main', label: 'Main', hint: 'นับคะแนน Performance', on: 'bg-gradient-to-r from-indigo-500 to-blue-600 text-white shadow-sm' },
+  { value: 'expand', label: 'Expand', hint: 'งานต่อยอด — ไม่นับคะแนน', on: 'bg-gradient-to-r from-slate-500 to-slate-600 text-white shadow-sm' },
+  { value: 'maintenance', label: 'Maintenance', hint: 'งานดูแลรักษา — ไม่นับคะแนน', on: 'bg-gradient-to-r from-teal-500 to-emerald-600 text-white shadow-sm' },
 ]
 
-/** ปุ่มสลับ Main / Expand แบบ segmented — ใช้ทั้งตอนสร้างและบนหน้าโปรเจกต์ */
+/** ปุ่มสลับ Main / Expand / Maintenance แบบ segmented — ใช้ทั้งตอนสร้างและบนหน้าโปรเจกต์ */
 export function KindToggle({
   value,
   onChange,
@@ -21,7 +22,7 @@ export function KindToggle({
 }) {
   const pad = size === 'sm' ? 'px-2.5 py-1 text-[11px]' : 'px-3 py-1.5 text-xs'
   return (
-    <div className="inline-flex rounded-lg bg-gray-100 p-0.5 ring-1 ring-gray-200">
+    <div className="inline-flex flex-wrap gap-0.5 rounded-lg bg-gray-100 p-0.5 ring-1 ring-gray-200">
       {OPTIONS.map((o) => {
         const active = value === o.value
         return (
@@ -34,11 +35,7 @@ export function KindToggle({
             aria-pressed={active}
             className={
               `btn-press rounded-md font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${pad} ` +
-              (active
-                ? o.value === 'main'
-                  ? 'bg-gradient-to-r from-indigo-500 to-blue-600 text-white shadow-sm'
-                  : 'bg-gradient-to-r from-slate-500 to-slate-600 text-white shadow-sm'
-                : 'text-gray-500 hover:text-gray-700')
+              (active ? o.on : 'text-gray-500 hover:text-gray-700')
             }
           >
             {o.label}

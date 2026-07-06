@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import type { ProjectKind } from '@/lib/domain/types'
 import { differenceInCalendarDays } from 'date-fns'
 import type { EnrichedProject } from '@/lib/data/dashboard'
 import { barMetrics, timelineRange, type DateRange } from '@/lib/domain/ganttGeometry'
@@ -21,8 +22,11 @@ function todayIso() {
 export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
   const [zoom, setZoom] = useState<ZoomLevel>('month')
   const [showArchived, setShowArchived] = useState(false)
+  const [kindFilter, setKindFilter] = useState<'all' | ProjectKind>('all')
   const archivedCount = projects.filter((p) => p.archived).length
-  const visible = projects.filter((p) => showArchived || !p.archived)
+  const visible = projects.filter(
+    (p) => (showArchived || !p.archived) && (kindFilter === 'all' || p.kind === kindFilter),
+  )
   const [expanded, setExpanded] = useState<Set<string>>(new Set(visible[0] ? [visible[0].id] : []))
 
   const range: DateRange | null = timelineRange([
@@ -66,6 +70,25 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
               {showArchived ? 'Hide Approved' : `✅ Approved (${archivedCount})`}
             </button>
           )}
+          {/* กรองตามประเภทโปรเจกต์ */}
+          <div className="inline-flex rounded-lg bg-gray-100 p-0.5 ring-1 ring-gray-200">
+            {(['all', 'main', 'expand', 'maintenance'] as const).map((k) => {
+              const active = kindFilter === k
+              const label = k === 'all' ? 'All' : k === 'main' ? 'Main' : k === 'expand' ? 'Expand' : 'Maint'
+              return (
+                <button
+                  key={k}
+                  onClick={() => setKindFilter(k)}
+                  className={
+                    'rounded-md px-2 py-0.5 text-[11px] font-medium transition ' +
+                    (active ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-700')
+                  }
+                >
+                  {label}
+                </button>
+              )
+            })}
+          </div>
         </div>
         <ZoomControl zoom={zoom} onChange={setZoom} />
       </div>
@@ -113,8 +136,13 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
                       {p.name}
                     </Link>
                     {p.kind === 'expand' && (
-                      <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500" title="งานเสริม — ไม่นับคะแนน Performance">
+                      <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500" title="งานต่อยอด — ไม่นับคะแนน Performance">
                         Expand
+                      </span>
+                    )}
+                    {p.kind === 'maintenance' && (
+                      <span className="shrink-0 rounded bg-teal-50 px-1.5 py-0.5 text-[10px] font-medium text-teal-600" title="งานดูแลรักษา — ไม่นับคะแนน Performance">
+                        Maint
                       </span>
                     )}
                     <span className="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-500" title="วันทำการรวมของโปรเจกต์">

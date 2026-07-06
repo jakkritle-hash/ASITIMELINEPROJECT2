@@ -47,6 +47,7 @@ export function migrateUsersPageAccessValues(values: string[][]): { values: stri
 }
 
 let usersPageAccessSchemaChecked = false
+let projectsKindSchemaChecked = false
 
 async function getRawValues(tab: string): Promise<string[][]> {
   const sheets = getSheetsClient()
@@ -75,6 +76,24 @@ async function ensureUsersPageAccessSchema(): Promise<void> {
   usersPageAccessSchemaChecked = true
 }
 
+/** เติมคอลัมน์ header 'kind' ให้ Projects ถ้ายังไม่มี (แถวเก่าจะอ่านเป็น '' → parse เป็น 'main')
+ *  แก้บั๊ก: เขียน kind ลงชีตแล้วอ่านกลับไม่เจอเพราะ header ยังไม่มีคอลัมน์นี้ */
+async function ensureProjectsKindSchema(): Promise<void> {
+  if (projectsKindSchemaChecked) return
+  const values = await getRawValues('Projects')
+  const header = values[0] ?? []
+  if (header.length > 0 && !header.includes('kind')) {
+    const sheets = getSheetsClient()
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: getSheetId(),
+      range: 'Projects!A1',
+      valueInputOption: 'RAW',
+      requestBody: { values: [[...header, 'kind']] },
+    })
+  }
+  projectsKindSchemaChecked = true
+}
+
 export function objectToRow(obj: Record<string, unknown>, header: string[]): string[] {
   return header.map((key) => {
     const v = obj[key]
@@ -85,6 +104,7 @@ export function objectToRow(obj: Record<string, unknown>, header: string[]): str
 /** อ่านทั้ง tab แบบสด (ไม่ cache) — ใช้ในการเขียน/หาแถว เพื่อความถูกต้อง */
 export async function getTab(tab: string): Promise<Record<string, string>[]> {
   if (tab === 'Users') await ensureUsersPageAccessSchema()
+  if (tab === 'Projects') await ensureProjectsKindSchema()
   return rowsToObjects(await getRawValues(tab))
 }
 
@@ -121,6 +141,7 @@ export async function getTabCached(tab: string): Promise<Record<string, string>[
 export function invalidateSheetCache(): void {
   _cache.clear()
   usersPageAccessSchemaChecked = false
+  projectsKindSchemaChecked = false
 }
 
 /** append หนึ่งแถวต่อท้าย tab ตามลำดับ header */

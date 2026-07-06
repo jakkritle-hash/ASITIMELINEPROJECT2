@@ -26,6 +26,8 @@ describe('parse', () => {
     expect(p.kanbanColumns).toEqual(['To Do', 'Done'])
     expect(p.kind).toBe('main') // ไม่มีคอลัมน์ kind → default main (backward-compat)
     expect(parseProject({ id: 'p2', kind: 'expand' } as never).kind).toBe('expand')
+    expect(parseProject({ id: 'p3', kind: 'maintenance' } as never).kind).toBe('maintenance')
+    expect(parseProject({ id: 'p4', kind: 'garbage' } as never).kind).toBe('main') // ค่าแปลก → main
     const t = parseTask({ id: 'k1', projectId: 'p1', title: 'T', assigneeId: 'u1', columnStatus: 'To Do', startDate: '', dueDate: '', slaStatus: 'on-track', editCount: '3', description: '', order: '2', createdAt: '', updatedAt: '' })
     expect(t.editCount).toBe(3)
     expect(t.order).toBe(2)

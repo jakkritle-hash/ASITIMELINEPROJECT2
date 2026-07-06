@@ -9,6 +9,9 @@ import { ProjectActions } from '@/components/project/ProjectActions'
 import { ProjectDepartments } from '@/components/project/ProjectDepartments'
 import { ProjectTeam } from '@/components/project/ProjectTeam'
 import { ProjectKind } from '@/components/project/ProjectKind'
+import { ProjectRename } from '@/components/project/ProjectRename'
+import { ProjectDates } from '@/components/project/ProjectDates'
+import { canEditProject } from '@/lib/domain/permissions'
 import { AvatarGroup } from '@/components/ui/Avatar'
 import { STATUS_META } from '@/components/ui/StatusBadge'
 
@@ -22,6 +25,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   const meta = STATUS_META[project.status]
   // สลับ Main/Expand ได้เฉพาะ Admin หรือเจ้าของโปรเจกต์
   const canSetKind = !!user && (user.role === 'Admin' || project.ownerUserId === user.id)
+  // แก้ชื่อ/timeline ได้ถ้าแก้โปรเจกต์ได้ (เจ้าของ/สมาชิก/หัวหน้าทีม/Admin)
+  const leadTeamIds = user ? teams.filter((t) => t.leadUserId === user.id).map((t) => t.id) : []
+  const canEdit = !!user && canEditProject(user, project, leadTeamIds)
 
   // ผู้รับผิดชอบที่เลือกได้: เฉพาะสมาชิกทีมของโปรเจกต์ (ถ้าไม่มีทีม → ทุกคน) และตัดคน Inactive ออก
   const team = teams.find((t) => t.id === project.teamId)
@@ -37,7 +43,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
       <header className="mb-4 mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-lg font-semibold text-gray-900 sm:text-xl">{project.name}</h1>
+            <ProjectRename projectId={project.id} name={project.name} canEdit={canEdit} />
             {project.complete ? (
               <span className="rounded bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-700">✅ Completed</span>
             ) : (
@@ -51,7 +57,11 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
             <div className="h-2 w-40 overflow-hidden rounded-full bg-gray-200">
               <div className="h-full rounded-full bg-blue-500" style={{ width: `${project.progress}%` }} />
             </div>
-            <span className="text-xs text-gray-500">{project.progress}% · {project.startDate} → {project.dueDate} · {project.tasks.length} งาน</span>
+            <span className="flex flex-wrap items-center gap-1.5 text-xs text-gray-500">
+              {project.progress}% ·
+              <ProjectDates projectId={project.id} startDate={project.startDate} dueDate={project.dueDate} canEdit={canEdit} />
+              · {project.tasks.length} งาน
+            </span>
           </div>
           <div className="mt-2 flex flex-col gap-1.5">
             <ProjectKind projectId={project.id} kind={project.kind} canEdit={canSetKind} />

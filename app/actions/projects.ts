@@ -2,8 +2,9 @@
 
 import { revalidatePath } from 'next/cache'
 import type { Project, ProjectKind } from '@/lib/domain/types'
-import { getTab, appendRow, updateRowById, deleteRowById, invalidateSheetCache } from '@/lib/sheets/repository'
-import { serializeProject, parseProject, parseTask, parseTeam, TAB_HEADERS } from '@/lib/sheets/schema'
+import { toProjectKind } from '@/lib/domain/types'
+import { getTab, appendRow, appendRows, updateRowById, deleteRowById, invalidateSheetCache } from '@/lib/sheets/repository'
+import { serializeProject, serializeLog, parseProject, parseTask, parseTeam, TAB_HEADERS } from '@/lib/sheets/schema'
 import { canEditProject } from '@/lib/domain/permissions'
 import { sanitizeDepartments } from '@/lib/domain/departments'
 import { getCurrentUser } from '@/lib/auth/session'
@@ -11,6 +12,15 @@ import { sheetsConfigured } from '@/lib/data/dashboard'
 import { getAppConfig } from '@/lib/data/config'
 
 const P_HEADER = TAB_HEADERS.Projects as unknown as string[]
+const LOG_HEADER = TAB_HEADERS.ActivityLog as unknown as string[]
+
+/** เขียน Activity Log ของโปรเจกต์ (เช่น rename / เปลี่ยนวัน) */
+async function logProject(projectId: string, actorId: string, field: string, oldValue: string, newValue: string, now: string) {
+  await appendRows('ActivityLog', [serializeLog({
+    id: `${projectId}-${now}-${field}`, timestamp: now, actorId,
+    entityType: 'project', entityId: projectId, action: 'update', field, oldValue, newValue,
+  })], LOG_HEADER)
+}
 
 export interface NewProjectInput {
   name: string
@@ -65,7 +75,7 @@ export async function createProjectAction(input: NewProjectInput): Promise<Creat
     description: input.description || '',
     kanbanColumns: config.kanbanColumns,
     departments: sanitizeDepartments(input.departments || [], config.departments),
-    kind: input.kind === 'expand' ? 'expand' : 'main',
+    kind: toProjectKind(input.kind),
     archived: false,
     createdAt: now,
     updatedAt: now,
@@ -87,7 +97,7 @@ async function loadProjectForEdit(projectId: string) {
   if (!project) return { error: 'not found' as const }
   const leadTeamIds = teams.filter((t) => t.leadUserId === user.id).map((t) => t.id)
   if (!canEditProject(user, project, leadTeamIds)) return { error: 'forbidden' as const }
-  return { project }
+  return { project, user }
 }
 
 /** เก็บถาวร/เลิกเก็บถาวรโปรเจกต์ (ซ่อน/แสดงใน Dashboard) */
@@ -134,6 +144,42 @@ export async function setProjectTeamAction(projectId: string, teamId: string): P
   return { ok: true }
 }
 
+/** เปลี่ยนชื่อโปรเจกต์ได้ทุกเมื่อ — ผู้แก้โปรเจกต์ได้ (เจ้าของ/สมาชิก/หัวหน้าทีม/Admin) + บันทึก log */
+export async function renameProjectAction(projectId: string, name: string): Promise<CreateResult> {
+  if (!sheetsConfigured()) return { ok: true }
+  const clean = name.trim()
+  if (!clean) return { ok: false, error: 'ต้องมีชื่อโปรเจกต์' }
+  const ctx = await loadProjectForEdit(projectId)
+  if ('error' in ctx) return { ok: false, error: ctx.error }
+  if (clean === ctx.project.name) return { ok: true }
+  const now = new Date().toISOString()
+  const updated: Project = { ...ctx.project, name: clean, updatedAt: now }
+  await updateRowById('Projects', projectId, serializeProject(updated), P_HEADER)
+  await logProject(projectId, ctx.user.id, 'name', ctx.project.name, clean, now)
+  revalidatePath('/')
+  revalidatePath(`/projects/${projectId}`)
+  invalidateSheetCache()
+  return { ok: true }
+}
+
+/** ยืด/ขยาย Timeline (วันเริ่ม–วันครบกำหนด) ได้ทุกเมื่อ — ผู้แก้โปรเจกต์ได้ + บันทึก log */
+export async function setProjectDatesAction(projectId: string, startDate: string, dueDate: string): Promise<CreateResult> {
+  if (!sheetsConfigured()) return { ok: true }
+  if (!startDate || !dueDate) return { ok: false, error: 'ต้องระบุวันเริ่มและวันครบกำหนด' }
+  if (dueDate < startDate) return { ok: false, error: 'วันครบกำหนดต้องไม่ก่อนวันเริ่ม' }
+  const ctx = await loadProjectForEdit(projectId)
+  if ('error' in ctx) return { ok: false, error: ctx.error }
+  const now = new Date().toISOString()
+  const updated: Project = { ...ctx.project, startDate, dueDate, updatedAt: now }
+  await updateRowById('Projects', projectId, serializeProject(updated), P_HEADER)
+  if (ctx.project.startDate !== startDate) await logProject(projectId, ctx.user.id, 'startDate', ctx.project.startDate, startDate, now)
+  if (ctx.project.dueDate !== dueDate) await logProject(projectId, ctx.user.id, 'dueDate', ctx.project.dueDate, dueDate, now)
+  revalidatePath('/')
+  revalidatePath(`/projects/${projectId}`)
+  invalidateSheetCache()
+  return { ok: true }
+}
+
 /** สลับประเภทโปรเจกต์ Main/Expand — Admin หรือ Owner เท่านั้น (ต่างจาก canEditProject
  *  ที่รวมสมาชิก/หัวหน้าทีมด้วย; ที่นี่จงใจจำกัดแค่ผู้ดูแลกับเจ้าของ เพราะกระทบการคิดคะแนน) */
 export async function setProjectKindAction(projectId: string, kind: ProjectKind): Promise<CreateResult> {
@@ -145,7 +191,7 @@ export async function setProjectKindAction(projectId: string, kind: ProjectKind)
   if (user.role !== 'Admin' && project.ownerUserId !== user.id) {
     return { ok: false, error: 'เฉพาะ Admin หรือเจ้าของโปรเจกต์เท่านั้น' }
   }
-  const updated: Project = { ...project, kind: kind === 'expand' ? 'expand' : 'main', updatedAt: new Date().toISOString() }
+  const updated: Project = { ...project, kind: toProjectKind(kind), updatedAt: new Date().toISOString() }
   await updateRowById('Projects', projectId, serializeProject(updated), P_HEADER)
   revalidatePath('/')
   revalidatePath('/performance')
