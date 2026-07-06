@@ -105,28 +105,31 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
     <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-100">
       {toolbar}
 
-      <div className="overflow-x-auto">
+      {/* กรอบเลื่อนของ Gantt เอง (แนวตั้ง+แนวนอน) เพื่อ freeze หัวแถวและคอลัมน์ชื่อ */}
+      <div className="max-h-[70vh] overflow-auto">
         <div style={{ width: LABEL_W + timelineW }}>
-          {/* Header layers */}
-          {layers.map((layer) => (
-            <div key={layer} className="flex border-b border-gray-100">
-              <div className="sticky left-0 z-20 shrink-0 border-r border-gray-100 bg-white" style={{ width: LABEL_W }} />
-              <div className="relative" style={{ width: timelineW, height: 22 }}>
-                {segmentsForLayer(layer, range).map((seg, i) => {
-                  const pxWidth = (seg.widthPct / 100) * timelineW
-                  return (
-                    <div
-                      key={i}
-                      className="absolute flex items-center justify-center overflow-hidden border-r border-gray-100 text-[10px] whitespace-nowrap text-gray-500"
-                      style={{ left: `${seg.leftPct}%`, width: `${seg.widthPct}%`, height: '100%' }}
-                    >
-                      {pxWidth > 16 ? seg.label : ''}
-                    </div>
-                  )
-                })}
+          {/* Header layers — freeze ไว้ด้านบน (sticky top) เลื่อนลงก็ยังเห็นเดือน/สัปดาห์ */}
+          <div className="sticky top-0 z-30 bg-white shadow-[0_2px_4px_-2px_rgba(15,23,42,0.18)]">
+            {layers.map((layer) => (
+              <div key={layer} className="flex border-b border-gray-100">
+                <div className="sticky left-0 z-40 shrink-0 border-r border-gray-100 bg-white" style={{ width: LABEL_W }} />
+                <div className="relative" style={{ width: timelineW, height: 22 }}>
+                  {segmentsForLayer(layer, range).map((seg, i) => {
+                    const pxWidth = (seg.widthPct / 100) * timelineW
+                    return (
+                      <div
+                        key={i}
+                        className="absolute flex items-center justify-center overflow-hidden border-r border-gray-100 text-[10px] whitespace-nowrap text-gray-500"
+                        style={{ left: `${seg.leftPct}%`, width: `${seg.widthPct}%`, height: '100%' }}
+                      >
+                        {pxWidth > 16 ? seg.label : ''}
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
 
           {/* Rows */}
           {visible.map((p) => {
