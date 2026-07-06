@@ -33,7 +33,57 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
     ...visible.map((p) => ({ startDate: p.startDate, dueDate: p.dueDate })),
     ...visible.flatMap((p) => p.tasks.map((t) => ({ startDate: t.startDate, dueDate: t.dueDate }))),
   ])
-  if (!range) return <p className="p-6 text-sm text-gray-500">ยังไม่มีโปรเจกต์ที่แสดง</p>
+  // Toolbar (หัวตาราง + ปุ่มกรอง) — ต้องแสดงเสมอ แม้ผลกรองจะว่าง เพื่อให้กดกลับได้
+  const toolbar = (
+    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 bg-gradient-to-r from-gray-50/80 to-white p-3">
+      <div className="flex items-center gap-3">
+        <span className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+          <span className="h-4 w-1 rounded-full bg-gradient-to-b from-indigo-500 to-blue-600" />
+          Project Timeline
+        </span>
+        {archivedCount > 0 && (
+          <button
+            onClick={() => setShowArchived((v) => !v)}
+            className={
+              'rounded-md px-2 py-1 text-[11px] transition ' +
+              (showArchived ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200')
+            }
+          >
+            {showArchived ? 'Hide Approved' : `✅ Approved (${archivedCount})`}
+          </button>
+        )}
+        {/* กรองตามประเภทโปรเจกต์ */}
+        <div className="inline-flex rounded-lg bg-gray-100 p-0.5 ring-1 ring-gray-200">
+          {(['all', 'main', 'expand', 'maintenance'] as const).map((k) => {
+            const active = kindFilter === k
+            const label = k === 'all' ? 'All' : k === 'main' ? 'Main' : k === 'expand' ? 'Expand' : 'Maint'
+            return (
+              <button
+                key={k}
+                onClick={() => setKindFilter(k)}
+                className={
+                  'rounded-md px-2 py-0.5 text-[11px] font-medium transition ' +
+                  (active ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-700')
+                }
+              >
+                {label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+      <ZoomControl zoom={zoom} onChange={setZoom} />
+    </div>
+  )
+
+  if (!range) {
+    return (
+      <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-100">
+        {toolbar}
+        <p className="p-6 text-sm text-gray-500">ยังไม่มีโปรเจกต์ที่แสดงสำหรับตัวกรองนี้</p>
+      </div>
+    )
+  }
 
   const totalDays = Math.max(1, differenceInCalendarDays(new Date(range.end), new Date(range.start)))
   const timelineW = Math.max(600, Math.round(totalDays * PX_PER_DAY[zoom]))
@@ -53,45 +103,7 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
 
   return (
     <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-100">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 bg-gradient-to-r from-gray-50/80 to-white p-3">
-        <div className="flex items-center gap-3">
-          <span className="flex items-center gap-2 text-sm font-semibold text-gray-800">
-            <span className="h-4 w-1 rounded-full bg-gradient-to-b from-indigo-500 to-blue-600" />
-            Project Timeline
-          </span>
-          {archivedCount > 0 && (
-            <button
-              onClick={() => setShowArchived((v) => !v)}
-              className={
-                'rounded-md px-2 py-1 text-[11px] transition ' +
-                (showArchived ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200')
-              }
-            >
-              {showArchived ? 'Hide Approved' : `✅ Approved (${archivedCount})`}
-            </button>
-          )}
-          {/* กรองตามประเภทโปรเจกต์ */}
-          <div className="inline-flex rounded-lg bg-gray-100 p-0.5 ring-1 ring-gray-200">
-            {(['all', 'main', 'expand', 'maintenance'] as const).map((k) => {
-              const active = kindFilter === k
-              const label = k === 'all' ? 'All' : k === 'main' ? 'Main' : k === 'expand' ? 'Expand' : 'Maint'
-              return (
-                <button
-                  key={k}
-                  onClick={() => setKindFilter(k)}
-                  className={
-                    'rounded-md px-2 py-0.5 text-[11px] font-medium transition ' +
-                    (active ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-700')
-                  }
-                >
-                  {label}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-        <ZoomControl zoom={zoom} onChange={setZoom} />
-      </div>
+      {toolbar}
 
       <div className="overflow-x-auto">
         <div style={{ width: LABEL_W + timelineW }}>
