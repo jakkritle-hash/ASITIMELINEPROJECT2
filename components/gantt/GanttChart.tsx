@@ -12,7 +12,7 @@ import { STATUS_META } from '@/components/ui/StatusBadge'
 import { Avatar, AvatarGroup } from '@/components/ui/Avatar'
 import { ZoomControl } from './ZoomControl'
 
-const LABEL_W = 280
+const LABEL_W = 360
 const PX_PER_DAY: Record<ZoomLevel, number> = { year: 2.2, quarter: 4, month: 9, week: 22, day: 44 }
 
 function todayIso() {
@@ -144,7 +144,7 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
                     >
                       {isOpen ? '−' : '+'}
                     </button>
-                    <Link href={`/projects/${p.id}`} className="truncate text-sm font-semibold text-gray-800 hover:text-blue-600 hover:underline">
+                    <Link href={`/projects/${p.id}`} className="min-w-0 flex-1 truncate text-sm font-semibold text-gray-800 hover:text-blue-600 hover:underline" title={p.name}>
                       {p.name}
                     </Link>
                     {p.kind === 'expand' && (
