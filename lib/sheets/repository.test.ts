@@ -43,8 +43,8 @@ describe('migrateUsersPageAccessValues', () => {
       values: [
         ['id', 'email', 'pageAccess'],
         ['u1', 'a@x.co', ''],
-        ['u2', 'b@x.co', 'dashboard'],
-        ['u3', 'c@x.co', '__none__'],
+        ['u2', 'b@x.co', 'dashboard,workload'],
+        ['u3', 'c@x.co', 'workload'],
       ],
     })
   })

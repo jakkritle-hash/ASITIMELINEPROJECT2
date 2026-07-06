@@ -10,7 +10,7 @@ export function NavLinks({ allowed }: { allowed: string[] }) {
   const set = new Set(allowed)
   const links = PAGES.filter((p) => set.has(p.key))
   return (
-    <div className="flex items-center gap-0.5 overflow-x-auto">
+    <div className="flex flex-wrap items-center gap-0.5">
       {links.map((l) => {
         const active = l.href === '/' ? pathname === '/' : pathname.startsWith(l.href)
         return (

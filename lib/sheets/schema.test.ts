@@ -17,8 +17,8 @@ describe('parse', () => {
   })
   it('parseUser รองรับ pageAccess และ fallback จาก pageDenied เก่า', () => {
     expect(parseUser({ id: 'u1', email: '', name: '', role: 'Member', avatarColor: '', active: 'true', createdAt: '', pageAccess: 'dashboard,members' }).pageAccess).toEqual(['dashboard', 'members'])
-    expect(parseUser({ id: 'u2', email: '', name: '', role: 'Member', avatarColor: '', active: 'true', createdAt: '', pageDenied: 'performance' }).pageAccess).toEqual(['dashboard'])
-    expect(parseUser({ id: 'u3', email: '', name: '', role: 'Member', avatarColor: '', active: 'true', createdAt: '', pageDenied: 'dashboard,performance' }).pageAccess).toEqual(['__none__'])
+    expect(parseUser({ id: 'u2', email: '', name: '', role: 'Member', avatarColor: '', active: 'true', createdAt: '', pageDenied: 'performance' }).pageAccess).toEqual(['dashboard', 'workload'])
+    expect(parseUser({ id: 'u3', email: '', name: '', role: 'Member', avatarColor: '', active: 'true', createdAt: '', pageDenied: 'dashboard,performance,workload' }).pageAccess).toEqual(['__none__'])
   })
   it('parseProject/parseTask แปลง csv → array และตัวเลข', () => {
     const p = parseProject({ id: 'p1', name: 'P', teamId: 't1', memberIds: 'u1,u2', ownerUserId: 'u1', startDate: '', dueDate: '', status: 'at-risk', description: '', kanbanColumns: 'To Do,Done', createdAt: '', updatedAt: '' })

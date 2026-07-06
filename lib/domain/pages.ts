@@ -10,6 +10,7 @@ export interface PageDef {
 export const PAGES: PageDef[] = [
   { key: 'dashboard', label: 'Dashboard', href: '/' },
   { key: 'performance', label: 'Performance', href: '/performance' },
+  { key: 'workload', label: 'Workload', href: '/workload' },
   { key: 'members', label: 'Team Member', href: '/admin/members', admin: true },
   { key: 'teams', label: 'Team', href: '/admin/teams', admin: true },
   { key: 'control', label: 'Control Data', href: '/admin/control', admin: true },

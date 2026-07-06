@@ -79,7 +79,7 @@ describe('canAccessPage', () => {
     expect(normalizePageAccess(['dashboard', 'dashboard', 'unknown'])).toEqual(['dashboard'])
   })
   it('accessiblePageKeys: Member = หน้าเนื้อหา, Admin = ทุกหน้า', () => {
-    expect(accessiblePageKeys(member)).toEqual(['dashboard', 'performance'])
-    expect(accessiblePageKeys(admin)).toEqual(['dashboard', 'performance', 'members', 'teams', 'control'])
+    expect(accessiblePageKeys(member)).toEqual(['dashboard', 'performance', 'workload'])
+    expect(accessiblePageKeys(admin)).toEqual(['dashboard', 'performance', 'workload', 'members', 'teams', 'control'])
   })
 })
