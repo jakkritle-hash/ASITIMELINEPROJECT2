@@ -1,8 +1,10 @@
 import { getPerformance } from '@/lib/data/performance'
+import { getPerformanceHeatmaps } from '@/lib/data/heatmap'
 import { getCurrentUser } from '@/lib/auth/session'
 import { canAccessPage } from '@/lib/domain/permissions'
 import { NoAccess } from '@/components/layout/NoAccess'
 import { PerformanceBoard } from '@/components/performance/PerformanceBoard'
+import { ActivityHeatmap } from '@/components/performance/ActivityHeatmap'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,7 +13,7 @@ export default async function PerformancePage() {
   if (!user) return null
   if (!canAccessPage(user, 'performance')) return <NoAccess user={user} />
 
-  const { main, expand, maintenance, projectNames } = await getPerformance()
+  const [{ main, expand, maintenance, projectNames }, heatmap] = await Promise.all([getPerformance(), getPerformanceHeatmaps()])
 
   return (
     <main className="w-full px-4 py-6 sm:px-6 lg:px-8">
@@ -23,6 +25,8 @@ export default async function PerformancePage() {
       </header>
 
       <PerformanceBoard main={main} expand={expand} maintenance={maintenance} projectNames={projectNames} />
+
+      <ActivityHeatmap data={heatmap} />
     </main>
   )
 }
