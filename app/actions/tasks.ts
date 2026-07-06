@@ -6,7 +6,7 @@ import { getTab, updateRowById, appendRows, deleteRowById, invalidateSheetCache 
 import { parseTask, parseProject, parseTeam, serializeTask, serializeLog, TAB_HEADERS } from '@/lib/sheets/schema'
 import { applyTaskEdit, makeMoveLog } from '@/lib/domain/activity'
 import { computeSlaStatus } from '@/lib/domain/sla'
-import { canEditTask, canEditProject } from '@/lib/domain/permissions'
+import { canEditTask } from '@/lib/domain/permissions'
 import { getCurrentUser } from '@/lib/auth/session'
 import { sheetsConfigured } from '@/lib/data/dashboard'
 
@@ -51,22 +51,19 @@ export interface NewTaskInput {
   description?: string
 }
 
-/** สร้าง task ใหม่ในโปรเจกต์ — ต้องมีสิทธิ์แก้โปรเจกต์นั้น */
+/** สร้าง task ใหม่ในโปรเจกต์ — ผู้ใช้ที่ล็อกอินทุกคนเพิ่มงานในโปรเจกต์ใดก็ได้ (เครื่องมือทำงานร่วมกัน) */
 export async function createTaskAction(projectId: string, input: NewTaskInput): Promise<{ ok: boolean; error?: string }> {
   if (!sheetsConfigured()) return { ok: true }
   const user = await getCurrentUser()
   if (!user) return { ok: false, error: 'unauthenticated' }
   if (!input.title.trim()) return { ok: false, error: 'ต้องมีชื่องาน' }
 
-  const [tasks, projects, teams] = await Promise.all([
+  const [tasks, projects] = await Promise.all([
     getTab('Tasks').then((r) => r.map(parseTask)),
     getTab('Projects').then((r) => r.map(parseProject)),
-    getTab('Teams').then((r) => r.map(parseTeam)),
   ])
   const project = projects.find((p) => p.id === projectId)
   if (!project) return { ok: false, error: 'not found' }
-  const leadTeamIds = teams.filter((t) => t.leadUserId === user.id).map((t) => t.id)
-  if (!canEditProject(user, project, leadTeamIds)) return { ok: false, error: 'forbidden' }
 
   const now = new Date().toISOString()
   const projectTasks = tasks.filter((t) => t.projectId === projectId)
@@ -108,8 +105,7 @@ export async function editTaskAction(taskId: string, changes: Partial<Task>, exp
 
   const ctx = await loadContext(taskId)
   if (!ctx) return { ok: false, error: 'not found' }
-  const leadTeamIds = ctx.leadTeamIds.filter((s) => s.endsWith(':' + user.id)).map((s) => s.split(':')[0])
-  if (!canEditTask(user, ctx.task, ctx.project, leadTeamIds)) return { ok: false, error: 'forbidden' }
+  // แก้งานได้ทุกคนที่ล็อกอิน (ทำงานร่วมกัน) — ยังคง optimistic lock กันเขียนทับ
   if (expectedUpdatedAt && ctx.task.updatedAt !== expectedUpdatedAt) {
     return { ok: false, error: 'conflict: มีการแก้ไขจากที่อื่น กรุณารีเฟรช' }
   }
@@ -156,8 +152,7 @@ export async function moveTaskAction(taskId: string, toColumn: string): Promise<
 
   const ctx = await loadContext(taskId)
   if (!ctx) return { ok: false, error: 'not found' }
-  const leadTeamIds = ctx.leadTeamIds.filter((s) => s.endsWith(':' + user.id)).map((s) => s.split(':')[0])
-  if (!canEditTask(user, ctx.task, ctx.project, leadTeamIds)) return { ok: false, error: 'forbidden' }
+  // ย้ายงานบนบอร์ดได้ทุกคนที่ล็อกอิน (ทำงานร่วมกัน)
   if (ctx.task.columnStatus === toColumn) return { ok: true }
 
   const now = new Date().toISOString()
