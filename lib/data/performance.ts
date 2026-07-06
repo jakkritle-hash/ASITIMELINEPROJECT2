@@ -11,7 +11,9 @@ export interface PerformanceData {
 /** สรุปผลงานรายบุคคล (รวมทุกโปรเจกต์ทั้งที่ทำอยู่และเก็บถาวรแล้ว) */
 export async function getPerformance(): Promise<PerformanceData> {
   const [data, admin, config] = await Promise.all([getDashboardData(), getAdminData(), getAppConfig()])
-  const tasks = data.projects.flatMap((p) =>
+  // นับคะแนนเฉพาะโปรเจกต์ประเภท 'main' — 'expand' (งานเสริม) ไม่นับทั้งงานและ department load
+  const scored = data.projects.filter((p) => p.kind !== 'expand')
+  const tasks = scored.flatMap((p) =>
     p.tasks.map((t) => ({
       assigneeId: t.assigneeId,
       projectId: p.id,
@@ -20,7 +22,7 @@ export async function getPerformance(): Promise<PerformanceData> {
       workingDays: t.workingDays,
     })),
   )
-  const projects = data.projects.map((p) => ({ id: p.id, memberIds: p.memberIds, ownerUserId: p.ownerUserId, departments: p.departments }))
+  const projects = scored.map((p) => ({ id: p.id, memberIds: p.memberIds, ownerUserId: p.ownerUserId, departments: p.departments }))
   const projectNames = Object.fromEntries(data.projects.map((p) => [p.id, p.name]))
   // จัดอันดับเฉพาะผู้ใช้ที่ยัง active (requirement: คน Inactive ไม่เอามาแสดง)
   const stats = computePerformance(

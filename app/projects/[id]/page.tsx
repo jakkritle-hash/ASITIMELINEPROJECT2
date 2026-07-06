@@ -2,11 +2,13 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getProjectData } from '@/lib/data/project'
 import { getAppConfig } from '@/lib/data/config'
+import { getCurrentUser } from '@/lib/auth/session'
 import { KanbanBoard } from '@/components/kanban/KanbanBoard'
 import { NewTaskDialog } from '@/components/kanban/NewTaskDialog'
 import { ProjectActions } from '@/components/project/ProjectActions'
 import { ProjectDepartments } from '@/components/project/ProjectDepartments'
 import { ProjectTeam } from '@/components/project/ProjectTeam'
+import { ProjectKind } from '@/components/project/ProjectKind'
 import { AvatarGroup } from '@/components/ui/Avatar'
 import { STATUS_META } from '@/components/ui/StatusBadge'
 
@@ -14,10 +16,12 @@ export const dynamic = 'force-dynamic'
 
 export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const [data, config] = await Promise.all([getProjectData(id), getAppConfig()])
+  const [data, config, user] = await Promise.all([getProjectData(id), getAppConfig(), getCurrentUser()])
   if (!data) notFound()
   const { project, users, teams, logs } = data
   const meta = STATUS_META[project.status]
+  // สลับ Main/Expand ได้เฉพาะ Admin หรือเจ้าของโปรเจกต์
+  const canSetKind = !!user && (user.role === 'Admin' || project.ownerUserId === user.id)
 
   // ผู้รับผิดชอบที่เลือกได้: เฉพาะสมาชิกทีมของโปรเจกต์ (ถ้าไม่มีทีม → ทุกคน) และตัดคน Inactive ออก
   const team = teams.find((t) => t.id === project.teamId)
@@ -50,6 +54,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
             <span className="text-xs text-gray-500">{project.progress}% · {project.startDate} → {project.dueDate} · {project.tasks.length} งาน</span>
           </div>
           <div className="mt-2 flex flex-col gap-1.5">
+            <ProjectKind projectId={project.id} kind={project.kind} canEdit={canSetKind} />
             <ProjectTeam projectId={project.id} teamId={project.teamId} teams={teams} />
             <ProjectDepartments projectId={project.id} departments={project.departments} options={config.departments} />
           </div>

@@ -24,6 +24,8 @@ describe('parse', () => {
     const p = parseProject({ id: 'p1', name: 'P', teamId: 't1', memberIds: 'u1,u2', ownerUserId: 'u1', startDate: '', dueDate: '', status: 'at-risk', description: '', kanbanColumns: 'To Do,Done', createdAt: '', updatedAt: '' })
     expect(p.memberIds).toEqual(['u1', 'u2'])
     expect(p.kanbanColumns).toEqual(['To Do', 'Done'])
+    expect(p.kind).toBe('main') // ไม่มีคอลัมน์ kind → default main (backward-compat)
+    expect(parseProject({ id: 'p2', kind: 'expand' } as never).kind).toBe('expand')
     const t = parseTask({ id: 'k1', projectId: 'p1', title: 'T', assigneeId: 'u1', columnStatus: 'To Do', startDate: '', dueDate: '', slaStatus: 'on-track', editCount: '3', description: '', order: '2', createdAt: '', updatedAt: '' })
     expect(t.editCount).toBe(3)
     expect(t.order).toBe(2)

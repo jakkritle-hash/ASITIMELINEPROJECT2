@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import type { Team } from '@/lib/domain/types'
+import type { Team, ProjectKind } from '@/lib/domain/types'
 import { createProjectAction } from '@/app/actions/projects'
 import { DepartmentPicker } from './DepartmentPicker'
+import { KindToggle } from './KindToggle'
 import { Modal } from '@/components/ui/Modal'
 
 function todayIso() {
@@ -20,6 +21,7 @@ export function NewProjectDialog({ teams, departmentOptions }: { teams: Team[]; 
   const [dueDate, setDueDate] = useState('')
   const [description, setDescription] = useState('')
   const [departments, setDepartments] = useState<string[]>([])
+  const [kind, setKind] = useState<ProjectKind>('main')
 
   function submit() {
     if (!name.trim() || !dueDate) {
@@ -28,7 +30,7 @@ export function NewProjectDialog({ teams, departmentOptions }: { teams: Team[]; 
     }
     setError('')
     startTransition(async () => {
-      const res = await createProjectAction({ name, teamId, startDate, dueDate, description, departments })
+      const res = await createProjectAction({ name, teamId, startDate, dueDate, description, departments, kind })
       if (!res.ok) {
         setError(res.error || 'สร้างไม่สำเร็จ')
         return
@@ -38,6 +40,7 @@ export function NewProjectDialog({ teams, departmentOptions }: { teams: Team[]; 
       setDueDate('')
       setDescription('')
       setDepartments([])
+      setKind('main')
       // revalidatePath ใน server action อัปเดตหน้าให้อยู่แล้ว — ไม่ต้อง router.refresh()
       // (การเรียก refresh ซ้อนใน transition ทำให้ RSC stream ถูก abort → "Connection closed")
     })
@@ -57,6 +60,9 @@ export function NewProjectDialog({ teams, departmentOptions }: { teams: Team[]; 
             <div className="space-y-3">
               <Field label="ชื่อโปรเจกต์ *">
                 <input className="fld" value={name} onChange={(e) => setName(e.target.value)} placeholder="เช่น เว็บใหม่ Q4" autoFocus />
+              </Field>
+              <Field label="ประเภทโปรเจกต์">
+                <KindToggle value={kind} onChange={setKind} />
               </Field>
               <Field label="ทีม">
                 <select className="fld" value={teamId} onChange={(e) => setTeamId(e.target.value)}>

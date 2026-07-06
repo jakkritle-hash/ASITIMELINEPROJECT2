@@ -27,6 +27,7 @@ export default async function PerformancePage() {
         <h1 className="text-lg font-semibold text-gray-900 sm:text-xl">Individual Performance</h1>
         <p className="text-xs text-gray-500">
           จัดอันดับผลงานรายบุคคล 🏆 — คิดคะแนน<span className="font-semibold text-indigo-600">แยกทีละโปรเจกต์แล้วรวมกัน</span>
+          <span className="ml-1 rounded bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-500 ring-1 ring-indigo-100">เฉพาะโปรเจกต์ Main</span>
         </p>
         <p className="text-[11px] text-gray-400">
           คะแนนต่อโปรเจกต์ = <span className="font-medium text-indigo-500">Department ×15</span> + งานส่งตรงเวลา ×10 + อัตราตรงเวลา% ×0.5 + วันทำการ − งานเลยกำหนด ×8

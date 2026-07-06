@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import type { Project } from '@/lib/domain/types'
+import type { Project, ProjectKind } from '@/lib/domain/types'
 import { getTab, appendRow, updateRowById, deleteRowById, invalidateSheetCache } from '@/lib/sheets/repository'
 import { serializeProject, parseProject, parseTask, parseTeam, TAB_HEADERS } from '@/lib/sheets/schema'
 import { canEditProject } from '@/lib/domain/permissions'
@@ -20,6 +20,7 @@ export interface NewProjectInput {
   memberIds?: string[]
   description?: string
   departments?: string[]
+  kind?: ProjectKind
 }
 
 export interface CreateResult {
@@ -64,6 +65,7 @@ export async function createProjectAction(input: NewProjectInput): Promise<Creat
     description: input.description || '',
     kanbanColumns: config.kanbanColumns,
     departments: sanitizeDepartments(input.departments || [], config.departments),
+    kind: input.kind === 'expand' ? 'expand' : 'main',
     archived: false,
     createdAt: now,
     updatedAt: now,
@@ -124,6 +126,26 @@ export async function setProjectTeamAction(projectId: string, teamId: string): P
   // เปลี่ยนทีม → สมาชิกโปรเจกต์ตามทีมใหม่ + เจ้าของ; เลือก "ไม่ระบุ" → คงสมาชิกเดิมไว้
   const memberIds = teamId ? await membersFromTeam(teamId, ctx.project.ownerUserId) : ctx.project.memberIds
   const updated: Project = { ...ctx.project, teamId, memberIds, updatedAt: new Date().toISOString() }
+  await updateRowById('Projects', projectId, serializeProject(updated), P_HEADER)
+  revalidatePath('/')
+  revalidatePath('/performance')
+  revalidatePath(`/projects/${projectId}`)
+  invalidateSheetCache()
+  return { ok: true }
+}
+
+/** สลับประเภทโปรเจกต์ Main/Expand — Admin หรือ Owner เท่านั้น (ต่างจาก canEditProject
+ *  ที่รวมสมาชิก/หัวหน้าทีมด้วย; ที่นี่จงใจจำกัดแค่ผู้ดูแลกับเจ้าของ เพราะกระทบการคิดคะแนน) */
+export async function setProjectKindAction(projectId: string, kind: ProjectKind): Promise<CreateResult> {
+  if (!sheetsConfigured()) return { ok: true }
+  const user = await getCurrentUser()
+  if (!user) return { ok: false, error: 'unauthenticated' }
+  const project = (await getTab('Projects')).map(parseProject).find((p) => p.id === projectId)
+  if (!project) return { ok: false, error: 'not found' }
+  if (user.role !== 'Admin' && project.ownerUserId !== user.id) {
+    return { ok: false, error: 'เฉพาะ Admin หรือเจ้าของโปรเจกต์เท่านั้น' }
+  }
+  const updated: Project = { ...project, kind: kind === 'expand' ? 'expand' : 'main', updatedAt: new Date().toISOString() }
   await updateRowById('Projects', projectId, serializeProject(updated), P_HEADER)
   revalidatePath('/')
   revalidatePath('/performance')

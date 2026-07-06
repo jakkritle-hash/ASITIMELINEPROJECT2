@@ -4,7 +4,7 @@ import { CONTENT_PAGES } from '@/lib/domain/pages'
 export const TAB_HEADERS = {
   Users: ['id', 'email', 'name', 'role', 'avatarColor', 'active', 'createdAt', 'pageAccess'],
   Teams: ['id', 'name', 'memberIds', 'leadUserId', 'createdAt'],
-  Projects: ['id', 'name', 'teamId', 'memberIds', 'ownerUserId', 'startDate', 'dueDate', 'status', 'description', 'kanbanColumns', 'createdAt', 'updatedAt', 'archived', 'departments'],
+  Projects: ['id', 'name', 'teamId', 'memberIds', 'ownerUserId', 'startDate', 'dueDate', 'status', 'description', 'kanbanColumns', 'createdAt', 'updatedAt', 'archived', 'departments', 'kind'],
   Tasks: ['id', 'projectId', 'title', 'assigneeId', 'columnStatus', 'startDate', 'dueDate', 'slaStatus', 'editCount', 'description', 'order', 'createdAt', 'updatedAt'],
   ActivityLog: ['id', 'timestamp', 'actorId', 'entityType', 'entityId', 'action', 'field', 'oldValue', 'newValue'],
   Config: ['key', 'value'],
@@ -36,7 +36,9 @@ export function parseProject(r: Record<string, string>): Project {
   return {
     id: r.id, name: r.name, teamId: r.teamId, memberIds: csvToArr(r.memberIds), ownerUserId: r.ownerUserId,
     startDate: r.startDate, dueDate: r.dueDate, status: (r.status as SlaStatus) || 'on-track', description: r.description || '',
-    kanbanColumns: csvToArr(r.kanbanColumns), departments: csvToArr(r.departments), archived: toBool(r.archived), createdAt: r.createdAt, updatedAt: r.updatedAt,
+    kanbanColumns: csvToArr(r.kanbanColumns), departments: csvToArr(r.departments),
+    kind: r.kind === 'expand' ? 'expand' : 'main', // ค่าเดิมที่ไม่มีคอลัมน์ → main
+    archived: toBool(r.archived), createdAt: r.createdAt, updatedAt: r.updatedAt,
   }
 }
 export function parseTask(r: Record<string, string>): Task {

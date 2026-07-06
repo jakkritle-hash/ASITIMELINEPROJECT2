@@ -1,5 +1,7 @@
 export type Role = 'Admin' | 'Manager' | 'Member'
 export type SlaStatus = 'on-track' | 'at-risk' | 'overdue' | 'done'
+/** ประเภทโปรเจกต์: 'main' นับคะแนน Performance, 'expand' ไม่นับ (งานเสริม/ต่อยอด) */
+export type ProjectKind = 'main' | 'expand'
 
 export interface User {
   id: string
@@ -38,6 +40,8 @@ export interface Project {
   description: string
   kanbanColumns: string[]
   departments: string[]
+  /** 'main' = นับคะแนน Performance, 'expand' = ไม่นับ */
+  kind: ProjectKind
   archived: boolean
   createdAt: string
   updatedAt: string

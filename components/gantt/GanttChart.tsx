@@ -112,6 +112,11 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
                     <Link href={`/projects/${p.id}`} className="truncate text-sm font-semibold text-gray-800 hover:text-blue-600 hover:underline">
                       {p.name}
                     </Link>
+                    {p.kind === 'expand' && (
+                      <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500" title="งานเสริม — ไม่นับคะแนน Performance">
+                        Expand
+                      </span>
+                    )}
                     <span className="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-500" title="วันทำการรวมของโปรเจกต์">
                       {p.workingDays}d
                     </span>
