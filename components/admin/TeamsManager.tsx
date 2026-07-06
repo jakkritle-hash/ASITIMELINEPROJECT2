@@ -100,23 +100,27 @@ export function TeamsManager({
                   <span key={id} className="flex items-center gap-1.5 rounded-full bg-gray-50 py-1 pl-1 pr-2 text-xs ring-1 ring-gray-100">
                     <Avatar user={u} size={18} />
                     <span className="text-gray-700">{u?.name ?? id}</span>
+                    {/* ตั้งหัวหน้าทีม (★) เฉพาะ Admin — ตรงกับ setTeamLeadAction ที่ล็อกไว้ที่ Admin
+                        (ป้องกัน Manager ตั้งตัวเองเป็นหัวหน้าทีมเพื่อยกระดับสิทธิ์แก้/ลบโปรเจกต์) */}
+                    {canDelete && (
+                      <button
+                        onClick={() => { setTeams((prev) => setTeamLead(prev, t.id, id)); void setTeamLeadAction(t.id, id) }}
+                        title={isLead ? 'หัวหน้าทีม' : 'ตั้งเป็นหัวหน้าทีม'}
+                        className={isLead ? 'text-amber-500' : 'text-gray-300 hover:text-amber-400'}
+                      >
+                        ★
+                      </button>
+                    )}
+                    {/* แสดงดาวให้ทุกคนเห็นว่าใครเป็นหัวหน้าทีม (อ่านอย่างเดียว) เมื่อไม่ใช่ Admin */}
+                    {!canDelete && isLead && <span className="text-amber-500" title="หัวหน้าทีม">★</span>}
                     {canEdit && (
-                      <>
-                        <button
-                          onClick={() => { setTeams((prev) => setTeamLead(prev, t.id, id)); void setTeamLeadAction(t.id, id) }}
-                          title="ตั้งเป็นหัวหน้าทีม"
-                          className={isLead ? 'text-amber-500' : 'text-gray-300 hover:text-amber-400'}
-                        >
-                          ★
-                        </button>
-                        <button
-                          onClick={() => { setTeams((prev) => removeTeamMember(prev, t.id, id)); void removeTeamMemberAction(t.id, id) }}
-                          title="ลบออกจากทีม"
-                          className="text-gray-300 hover:text-red-400"
-                        >
-                          ✕
-                        </button>
-                      </>
+                      <button
+                        onClick={() => { setTeams((prev) => removeTeamMember(prev, t.id, id)); void removeTeamMemberAction(t.id, id) }}
+                        title="ลบออกจากทีม"
+                        className="text-gray-300 hover:text-red-400"
+                      >
+                        ✕
+                      </button>
                     )}
                   </span>
                 )

@@ -171,9 +171,13 @@ export async function removeTeamMemberAction(teamId: string, userId: string): Pr
   return writeTeam(teamId, (teams) => removeTeamMember(teams, teamId, userId))
 }
 
+/** ตั้งหัวหน้าทีม — Admin เท่านั้น
+ *  เหตุผลด้านความปลอดภัย: หัวหน้าทีม (Manager) ได้สิทธิ์ canEditProject เหนือทุกโปรเจกต์ของทีมนั้น
+ *  (แก้/ลบได้) ถ้าเปิดให้ทุกคนตั้งเอง Manager จะตั้งตัวเองเป็นหัวหน้าทีมใดก็ได้แล้วยกระดับสิทธิ์
+ *  ไปแก้/ลบโปรเจกต์ข้ามทีมได้ — จึงคงไว้ที่ Admin ส่วนการสร้างทีม/เพิ่ม-ลบสมาชิกยังเปิดให้ทุกคน */
 export async function setTeamLeadAction(teamId: string, userId: string): Promise<ActionResult> {
   if (!sheetsConfigured()) return { ok: true }
-  const gate = await requireUser()
+  const gate = await requireAdmin()
   if (!gate.ok) return gate
   return writeTeam(teamId, (teams) => setTeamLead(teams, teamId, userId))
 }
