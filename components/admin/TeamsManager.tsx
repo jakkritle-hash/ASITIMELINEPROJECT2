@@ -1,10 +1,20 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import type { User, Team } from '@/lib/domain/types'
-import { createTeam, addTeamMember, removeTeamMember, setTeamLead } from '@/lib/domain/adminOps'
-import { createTeamAction, deleteTeamAction, addTeamMemberAction, removeTeamMemberAction, setTeamLeadAction } from '@/app/actions/admin'
+import { createTeam, renameTeam, addTeamMember, removeTeamMember, setTeamLead } from '@/lib/domain/adminOps'
+import {
+  createTeamAction,
+  renameTeamAction,
+  deleteTeamAction,
+  addTeamMemberAction,
+  removeTeamMemberAction,
+  setTeamLeadAction,
+} from '@/app/actions/admin'
 import { Avatar } from '@/components/ui/Avatar'
+
+type TeamActionResult = { ok: boolean; error?: string }
 
 export function TeamsManager({
   users,
@@ -18,34 +28,59 @@ export function TeamsManager({
   /** ลบทีมทั้งทีม (destructive) — Admin เท่านั้น */
   canDelete?: boolean
 }) {
+  const router = useRouter()
   const [teams, setTeams] = useState<Team[]>(initial)
   const [newName, setNewName] = useState('')
   const [hint, setHint] = useState('')
+  const [editId, setEditId] = useState<string | null>(null)
+  const [editName, setEditName] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const usersById = new Map(users.map((u) => [u.id, u]))
   // คน Inactive ไม่แสดงและไม่ให้เลือก (requirement)
   const isActive = (id: string) => usersById.get(id)?.active === true
 
+  /** ทำ optimistic update → ยิง action → สำเร็จ: refresh ให้ทุกหน้า sync; พลาด: คืนค่าเดิม */
+  function commit(optimistic: (prev: Team[]) => Team[], call: () => Promise<TeamActionResult>) {
+    setTeams(optimistic)
+    call()
+      .then((r) => {
+        if (r.ok) router.refresh() // sync ข้อมูลทีมไปทุกหน้า (dashboard/performance/project)
+        else {
+          setTeams(initial)
+          if (r.error) alert(r.error)
+        }
+      })
+      .catch(() => setTeams(initial))
+  }
+
   function handleCreate() {
     if (!canEdit) return
     const name = newName.trim()
     if (!name) {
-      // กันกรณีกดปุ่มโดยยังไม่พิมพ์ชื่อ — ให้ feedback แทนที่จะเงียบ
       setHint('พิมพ์ชื่อทีมก่อนกด New Team')
       inputRef.current?.focus()
       return
     }
     setHint('')
-    setTeams((prev) => createTeam(prev, `t${Date.now()}`, name, new Date().toISOString()))
     setNewName('')
-    void createTeamAction(name)
+    commit((prev) => createTeam(prev, `t${Date.now()}`, name, new Date().toISOString()), () => createTeamAction(name))
+  }
+
+  function startRename(t: Team) {
+    setEditId(t.id)
+    setEditName(t.name)
+  }
+  function saveRename(teamId: string) {
+    const name = editName.trim()
+    if (!name) return
+    setEditId(null)
+    commit((prev) => renameTeam(prev, teamId, name), () => renameTeamAction(teamId, name))
   }
 
   function handleDeleteTeam(teamId: string, teamName: string) {
     if (!canDelete) return
     if (!confirm(`Delete team "${teamName}"? This cannot be undone.`)) return
-    setTeams((prev) => prev.filter((t) => t.id !== teamId))
-    void deleteTeamAction(teamId)
+    commit((prev) => prev.filter((t) => t.id !== teamId), () => deleteTeamAction(teamId))
   }
 
   return (
@@ -73,18 +108,50 @@ export function TeamsManager({
       {teams.map((t) => {
         const nonMembers = users.filter((u) => u.active && !t.memberIds.includes(u.id))
         const visibleMemberIds = t.memberIds.filter(isActive)
+        const editing = editId === t.id
         return (
           <div key={t.id} className="group rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-100 transition duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-500/5 hover:ring-indigo-100">
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-800">
-                <span className="h-4 w-1 rounded-full bg-gradient-to-b from-indigo-500 to-blue-600" />
-                {t.name}
-                <span className="rounded-full bg-gray-100 px-1.5 text-[10px] font-normal text-gray-400">{visibleMemberIds.length}</span>
-              </h3>
-              {canDelete && (
+            <div className="mb-3 flex items-center justify-between gap-2">
+              {editing ? (
+                <div className="flex flex-1 items-center gap-1.5">
+                  <span className="h-4 w-1 shrink-0 rounded-full bg-gradient-to-b from-indigo-500 to-blue-600" />
+                  <input
+                    autoFocus
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') { e.preventDefault(); saveRename(t.id) }
+                      if (e.key === 'Escape') setEditId(null)
+                    }}
+                    className="min-w-0 flex-1 rounded-md border border-indigo-200 px-2 py-1 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200/50"
+                  />
+                  <button onClick={() => saveRename(t.id)} className="btn-press shrink-0 rounded-md bg-indigo-600 px-2 py-1 text-[11px] font-medium text-white hover:bg-indigo-700">
+                    บันทึก
+                  </button>
+                  <button onClick={() => setEditId(null)} className="shrink-0 rounded-md px-1.5 py-1 text-[11px] text-gray-400 hover:text-gray-600">
+                    ยกเลิก
+                  </button>
+                </div>
+              ) : (
+                <h3 className="flex min-w-0 items-center gap-2 text-sm font-semibold text-gray-800">
+                  <span className="h-4 w-1 shrink-0 rounded-full bg-gradient-to-b from-indigo-500 to-blue-600" />
+                  <span className="truncate">{t.name}</span>
+                  <span className="shrink-0 rounded-full bg-gray-100 px-1.5 text-[10px] font-normal text-gray-400">{visibleMemberIds.length}</span>
+                  {canEdit && (
+                    <button
+                      onClick={() => startRename(t)}
+                      title="เปลี่ยนชื่อทีม"
+                      className="shrink-0 text-gray-300 transition hover:text-indigo-500"
+                    >
+                      ✎
+                    </button>
+                  )}
+                </h3>
+              )}
+              {canDelete && !editing && (
                 <button
                   onClick={() => handleDeleteTeam(t.id, t.name)}
-                  className="rounded-md border border-red-200 px-2 py-1 text-[11px] text-red-600 transition hover:bg-red-50"
+                  className="btn-press shrink-0 rounded-md border border-red-200 px-2 py-1 text-[11px] text-red-600 transition hover:bg-red-50"
                   title="Delete team"
                 >
                   🗑 Delete
@@ -100,22 +167,20 @@ export function TeamsManager({
                   <span key={id} className="flex items-center gap-1.5 rounded-full bg-gray-50 py-1 pl-1 pr-2 text-xs ring-1 ring-gray-100">
                     <Avatar user={u} size={18} />
                     <span className="text-gray-700">{u?.name ?? id}</span>
-                    {/* ตั้งหัวหน้าทีม (★) เฉพาะ Admin — ตรงกับ setTeamLeadAction ที่ล็อกไว้ที่ Admin
-                        (ป้องกัน Manager ตั้งตัวเองเป็นหัวหน้าทีมเพื่อยกระดับสิทธิ์แก้/ลบโปรเจกต์) */}
+                    {/* ตั้งหัวหน้าทีม (★) เฉพาะ Admin — ตรงกับ setTeamLeadAction ที่ล็อกไว้ที่ Admin */}
                     {canDelete && (
                       <button
-                        onClick={() => { setTeams((prev) => setTeamLead(prev, t.id, id)); void setTeamLeadAction(t.id, id) }}
+                        onClick={() => commit((prev) => setTeamLead(prev, t.id, id), () => setTeamLeadAction(t.id, id))}
                         title={isLead ? 'หัวหน้าทีม' : 'ตั้งเป็นหัวหน้าทีม'}
                         className={isLead ? 'text-amber-500' : 'text-gray-300 hover:text-amber-400'}
                       >
                         ★
                       </button>
                     )}
-                    {/* แสดงดาวให้ทุกคนเห็นว่าใครเป็นหัวหน้าทีม (อ่านอย่างเดียว) เมื่อไม่ใช่ Admin */}
                     {!canDelete && isLead && <span className="text-amber-500" title="หัวหน้าทีม">★</span>}
                     {canEdit && (
                       <button
-                        onClick={() => { setTeams((prev) => removeTeamMember(prev, t.id, id)); void removeTeamMemberAction(t.id, id) }}
+                        onClick={() => commit((prev) => removeTeamMember(prev, t.id, id), () => removeTeamMemberAction(t.id, id))}
                         title="ลบออกจากทีม"
                         className="text-gray-300 hover:text-red-400"
                       >
@@ -132,8 +197,7 @@ export function TeamsManager({
                 onChange={(e) => {
                   const uid = e.target.value
                   if (!uid) return
-                  setTeams((prev) => addTeamMember(prev, t.id, uid))
-                  void addTeamMemberAction(t.id, uid)
+                  commit((prev) => addTeamMember(prev, t.id, uid), () => addTeamMemberAction(t.id, uid))
                 }}
                 className="rounded-md border border-gray-200 px-2 py-1 text-xs outline-none focus:border-blue-300"
               >

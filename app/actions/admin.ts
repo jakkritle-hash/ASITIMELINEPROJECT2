@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import type { Role, User } from '@/lib/domain/types'
 import { getTab, updateRowById, appendRow, deleteRowById, invalidateSheetCache } from '@/lib/sheets/repository'
 import { parseUser, parseTeam, serializeUser, serializeTeam, TAB_HEADERS } from '@/lib/sheets/schema'
-import { updateUserRole, toggleUserActive, setUserPageAccess, addTeamMember, removeTeamMember, setTeamLead } from '@/lib/domain/adminOps'
+import { updateUserRole, toggleUserActive, setUserPageAccess, addTeamMember, removeTeamMember, setTeamLead, renameTeam } from '@/lib/domain/adminOps'
 import { canManageMembers, normalizePageAccess } from '@/lib/domain/permissions'
 import { isAllowedEmail } from '@/lib/auth/policy'
 import { getCurrentUser } from '@/lib/auth/session'
@@ -142,9 +142,23 @@ async function writeTeam(teamId: string, transform: (teams: ReturnType<typeof pa
   const updated = transform(teams).find((t) => t.id === teamId)
   if (!updated) return { ok: false, error: 'not found' }
   await updateRowById('Teams', teamId, serializeTeam(updated), T_HEADER)
-  revalidatePath('/admin/teams')
   invalidateSheetCache()
+  // sync ทุกหน้าที่ใช้ข้อมูลทีม: หน้า Team + Dashboard (avatar) + Performance (สมาชิกโปรเจกต์)
+  // ใช้ revalidatePath ราย path (ไม่ใช่ 'layout') — ปลอดภัยกับการเรียกแบบ fire-and-forget
+  revalidatePath('/admin/teams')
+  revalidatePath('/')
+  revalidatePath('/performance')
   return { ok: true }
+}
+
+/** เปลี่ยนชื่อทีม — เปิดให้ผู้ใช้ทุกคน (requirement: จัดการทีมได้เอง) */
+export async function renameTeamAction(teamId: string, name: string): Promise<ActionResult> {
+  if (!sheetsConfigured()) return { ok: true }
+  const gate = await requireUser()
+  if (!gate.ok) return gate
+  const clean = name.trim()
+  if (!clean) return { ok: false, error: 'ต้องมีชื่อทีม' }
+  return writeTeam(teamId, (teams) => renameTeam(teams, teamId, clean))
 }
 
 export async function deleteTeamAction(teamId: string): Promise<ActionResult> {

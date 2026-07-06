@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { updateUserRole, toggleUserActive, setUserPageAccess, createTeam, addTeamMember, removeTeamMember, setTeamLead } from './adminOps'
+import { updateUserRole, toggleUserActive, setUserPageAccess, createTeam, renameTeam, addTeamMember, removeTeamMember, setTeamLead } from './adminOps'
 import type { User, Team } from './types'
 
 const users: User[] = [
@@ -25,6 +25,12 @@ describe('team ops', () => {
     const next = createTeam(teams, 't2', 'Dev', '2026-07-01')
     expect(next).toHaveLength(2)
     expect(next[1]).toMatchObject({ id: 't2', name: 'Dev', memberIds: [], leadUserId: '' })
+  })
+  it('เปลี่ยนชื่อทีม (เฉพาะทีมที่ตรง id)', () => {
+    const next = renameTeam(teams, 't1', 'Design Ops')
+    expect(next[0].name).toBe('Design Ops')
+    expect(next[0].id).toBe('t1')
+    expect(renameTeam(teams, 'nope', 'X')[0].name).toBe(teams[0].name) // id ไม่ตรง → ไม่เปลี่ยน
   })
   it('เพิ่มสมาชิก (ไม่ซ้ำ)', () => {
     const next = addTeamMember(teams, 't1', 'u2')

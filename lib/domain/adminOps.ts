@@ -20,6 +20,11 @@ export function createTeam(teams: Team[], id: string, name: string, createdAt: s
   return [...teams, { id, name, memberIds: [], leadUserId: '', createdAt }]
 }
 
+/** เปลี่ยนชื่อทีม */
+export function renameTeam(teams: Team[], teamId: string, name: string): Team[] {
+  return teams.map((t) => (t.id === teamId ? { ...t, name } : t))
+}
+
 /** เพิ่มสมาชิกเข้าทีม (ไม่ซ้ำ) */
 export function addTeamMember(teams: Team[], teamId: string, userId: string): Team[] {
   return teams.map((t) =>

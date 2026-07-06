@@ -25,7 +25,14 @@ export default async function TeamsPage() {
           {usingFixtures && <span className="rounded-md bg-amber-50 px-2 py-1 text-[11px] text-amber-600">โหมดตัวอย่าง</span>}
         </div>
       </header>
-      <TeamsManager users={users} teams={teams} canEdit canDelete={canDelete} />
+      {/* key = ลายเซ็นข้อมูลทีม: remount เมื่อข้อมูลจาก server เปลี่ยน (หลัง router.refresh / แก้จากที่อื่น) */}
+      <TeamsManager
+        key={teams.map((t) => `${t.id}:${t.name}:${t.leadUserId}:${t.memberIds.join('|')}`).join(',')}
+        users={users}
+        teams={teams}
+        canEdit
+        canDelete={canDelete}
+      />
     </main>
   )
 }
