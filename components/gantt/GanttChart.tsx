@@ -11,6 +11,7 @@ import { layersForZoom, type ZoomLevel } from '@/lib/domain/timeLayers'
 import { STATUS_META } from '@/components/ui/StatusBadge'
 import { Avatar, AvatarGroup } from '@/components/ui/Avatar'
 import { reorderProjectsAction } from '@/app/actions/projects'
+import { reorderTasksAction } from '@/app/actions/tasks'
 import { ZoomControl } from './ZoomControl'
 
 const LABEL_W = 360
@@ -55,6 +56,30 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
     void reorderProjectsAction(ids) // persist (revalidate '/' ให้คนอื่นเห็นตอนโหลดถัดไป)
   }
 
+  // ── ลากสลับลำดับ "งาน" ภายในโปรเจกต์เดียวกัน ──
+  const [taskOrders, setTaskOrders] = useState<Record<string, string[]>>({})
+  const [dragTask, setDragTask] = useState<{ pid: string; id: string } | null>(null)
+
+  function tasksOf(p: EnrichedProject) {
+    const ids = taskOrders[p.id]
+    if (!ids) return p.tasks
+    const pos = new Map(ids.map((id, i) => [id, i]))
+    return [...p.tasks].sort((a, b) => (pos.get(a.id) ?? 1e9) - (pos.get(b.id) ?? 1e9))
+  }
+
+  function reorderTaskTo(p: EnrichedProject, targetId: string) {
+    const drag = dragTask
+    setDragTask(null)
+    if (!drag || drag.pid !== p.id || drag.id === targetId) return
+    const ids = tasksOf(p).map((t) => t.id)
+    const from = ids.indexOf(drag.id)
+    const to = ids.indexOf(targetId)
+    if (from < 0 || to < 0) return
+    ids.splice(to, 0, ids.splice(from, 1)[0])
+    setTaskOrders((prev) => ({ ...prev, [p.id]: ids }))
+    void reorderTasksAction(p.id, ids) // persist
+  }
+
   const range: DateRange | null = timelineRange([
     ...visible.map((p) => ({ startDate: p.startDate, dueDate: p.dueDate })),
     ...visible.flatMap((p) => p.tasks.map((t) => ({ startDate: t.startDate, dueDate: t.dueDate }))),
@@ -80,9 +105,9 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
         )}
         {/* กรองตามประเภทโปรเจกต์ */}
         <div className="inline-flex rounded-lg bg-gray-100 p-0.5 ring-1 ring-gray-200">
-          {(['all', 'main', 'expand', 'maintenance'] as const).map((k) => {
+          {(['all', 'main', 'expand', 'maintenance', 'revise'] as const).map((k) => {
             const active = kindFilter === k
-            const label = k === 'all' ? 'All' : k === 'main' ? 'Main' : k === 'expand' ? 'Expand' : 'Maint'
+            const label = k === 'all' ? 'All' : k === 'main' ? 'Main' : k === 'expand' ? 'Expand' : k === 'maintenance' ? 'Maint' : 'Revise'
             return (
               <button
                 key={k}
@@ -241,8 +266,13 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
                       </span>
                     )}
                     {p.kind === 'maintenance' && (
-                      <span className="shrink-0 rounded bg-teal-50 px-1.5 py-0.5 text-[10px] font-medium text-teal-600" title="งานดูแลรักษา — ไม่นับคะแนน Performance">
+                      <span className="shrink-0 rounded bg-teal-50 px-1.5 py-0.5 text-[10px] font-medium text-teal-600" title="งานดูแลรักษา — คิดคะแนนแยก">
                         Maint
+                      </span>
+                    )}
+                    {p.kind === 'revise' && (
+                      <span className="shrink-0 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-600" title="งานแก้ไข/ปรับปรุง — คิดคะแนนแยก">
+                        Revise
                       </span>
                     )}
                     <span className="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-500" title="วันทำการรวมของโปรเจกต์">
@@ -291,12 +321,31 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
 
                 {/* Task rows */}
                 {isOpen &&
-                  p.tasks.map((t) => {
+                  tasksOf(p).map((t) => {
                     const tm = barMetrics(t.startDate, t.dueDate, range)
                     const meta = STATUS_META[t.slaStatus]
                     return (
-                      <div key={t.id} className="group flex items-center border-b border-gray-50 transition-colors hover:bg-indigo-50/20">
-                        <div className="sticky left-0 z-20 flex shrink-0 items-center gap-2 border-r border-gray-100 bg-white py-1.5 pr-3 shadow-[6px_0_12px_-10px_rgba(15,23,42,0.25)] transition-colors group-hover:bg-indigo-50/40" style={{ width: LABEL_W, paddingLeft: 38 }}>
+                      <div
+                        key={t.id}
+                        onDragOver={(e) => { if (dragTask?.pid === p.id) e.preventDefault() }}
+                        onDrop={() => reorderTaskTo(p, t.id)}
+                        className={
+                          'group flex items-center border-b border-gray-50 transition-colors hover:bg-indigo-50/20 ' +
+                          (dragTask?.id === t.id ? 'opacity-40 ' : '') +
+                          (dragTask && dragTask.pid === p.id && dragTask.id !== t.id ? 'hover:bg-indigo-100/60' : '')
+                        }
+                      >
+                        <div className="sticky left-0 z-20 flex shrink-0 items-center gap-2 border-r border-gray-100 bg-white py-1.5 pr-3 shadow-[6px_0_12px_-10px_rgba(15,23,42,0.25)] transition-colors group-hover:bg-indigo-50/40" style={{ width: LABEL_W, paddingLeft: 22 }}>
+                          {/* ที่จับลากสลับลำดับงาน (ภายในโปรเจกต์เดียวกัน) */}
+                          <span
+                            draggable
+                            onDragStart={(e) => { setDragTask({ pid: p.id, id: t.id }); e.dataTransfer.effectAllowed = 'move' }}
+                            onDragEnd={() => setDragTask(null)}
+                            title="ลากเพื่อสลับลำดับงาน"
+                            className="shrink-0 cursor-grab select-none px-0.5 text-gray-200 hover:text-gray-500 active:cursor-grabbing"
+                          >
+                            ⠿
+                          </span>
                           <Avatar user={t.assignee} size={16} />
                           <span className="truncate text-xs text-gray-600">{t.title}</span>
                           <span className="shrink-0 text-[10px] text-gray-400" title="วันทำการของงานนี้">· {t.workingDays}d</span>

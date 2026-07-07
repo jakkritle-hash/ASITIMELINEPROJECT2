@@ -94,7 +94,7 @@ async function ensureProjectsKindSchema(): Promise<void> {
   if (projectsKindSchemaChecked) return
   const values = await getRawValues('Projects')
   const header = values[0] ?? []
-  const missing = ['kind', 'order'].filter((c) => !header.includes(c))
+  const missing = ['kind', 'order', 'overduePenalty'].filter((c) => !header.includes(c))
   if (header.length > 0 && missing.length > 0) {
     const sheets = getSheetsClient()
     await sheets.spreadsheets.values.update({

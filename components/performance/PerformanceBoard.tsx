@@ -17,22 +17,25 @@ const TABS: { key: ProjectKind; label: string; note: string; accent: string }[] 
   { key: 'main', label: 'Main', note: 'โปรเจกต์หลัก', accent: 'from-indigo-500 to-blue-600' },
   { key: 'expand', label: 'Expand', note: 'งานต่อยอด', accent: 'from-slate-500 to-slate-600' },
   { key: 'maintenance', label: 'Maintenance', note: 'งานดูแลรักษา', accent: 'from-teal-500 to-emerald-600' },
+  { key: 'revise', label: 'Revise', note: 'งานแก้ไข/ปรับปรุง', accent: 'from-amber-500 to-orange-600' },
 ]
 
 export function PerformanceBoard({
   main,
   expand,
   maintenance,
+  revise,
   projectNames,
 }: {
   main: MemberStats[]
   expand: MemberStats[]
   maintenance: MemberStats[]
+  revise: MemberStats[]
   projectNames: Record<string, string>
 }) {
   const [tab, setTab] = useState<ProjectKind>('main')
-  const data = tab === 'main' ? main : tab === 'expand' ? expand : maintenance
-  const counts: Record<ProjectKind, number> = { main: main.length, expand: expand.length, maintenance: maintenance.length }
+  const data = tab === 'main' ? main : tab === 'expand' ? expand : tab === 'maintenance' ? maintenance : revise
+  const counts: Record<ProjectKind, number> = { main: main.length, expand: expand.length, maintenance: maintenance.length, revise: revise.length }
 
   /** ดาวน์โหลดอันดับของแท็บปัจจุบันเป็น CSV (มี BOM ให้เปิดใน Excel ภาษาไทยไม่เพี้ยน) */
   function exportCsv() {

@@ -15,10 +15,11 @@ export interface AppConfig {
   weights: Weights // main
   weightsExpand: Weights
   weightsMaintenance: Weights
+  weightsRevise: Weights
 }
 
 /** ชนิดน้ำหนัก → key ใน Config tab */
-export const WEIGHT_KEY = { main: 'weights', expand: 'weightsExpand', maintenance: 'weightsMaintenance' } as const
+export const WEIGHT_KEY = { main: 'weights', expand: 'weightsExpand', maintenance: 'weightsMaintenance', revise: 'weightsRevise' } as const
 export type WeightKind = keyof typeof WEIGHT_KEY
 
 const csv = (s?: string): string[] => (s ? s.split(',').map((x) => x.trim()).filter(Boolean) : [])
@@ -31,6 +32,7 @@ function defaults(): AppConfig {
     weights: { ...WEIGHTS },
     weightsExpand: { ...WEIGHTS },
     weightsMaintenance: { ...WEIGHTS },
+    weightsRevise: { ...WEIGHTS },
   }
 }
 
@@ -66,6 +68,7 @@ export async function getAppConfig(): Promise<AppConfig> {
       weights: parseWeights(m.weights, base.weights),
       weightsExpand: parseWeights(m.weightsExpand, base.weightsExpand),
       weightsMaintenance: parseWeights(m.weightsMaintenance, base.weightsMaintenance),
+      weightsRevise: parseWeights(m.weightsRevise, base.weightsRevise),
     }
   } catch {
     return base

@@ -12,6 +12,7 @@ export interface PerformanceData {
   main: MemberStats[]
   expand: MemberStats[]
   maintenance: MemberStats[]
+  revise: MemberStats[]
   projectNames: Record<string, string>
 }
 
@@ -36,7 +37,8 @@ function rankByKind(
         columnStatus: t.columnStatus,
         slaStatus: t.slaStatus,
         workingDays: t.workingDays,
-        lateDays: lateWorkingDays(t.dueDate, ref, holidays),
+        // โปรเจกต์ที่ปิดการคิด Overdue (Control Data) → ไม่หักความล่าช้าเลย
+        lateDays: p.overduePenalty === false ? 0 : lateWorkingDays(t.dueDate, ref, holidays),
       }
     }),
   )
@@ -55,6 +57,7 @@ export async function getPerformance(now: Date = new Date()): Promise<Performanc
     main: rankByKind(activeUsers, data.projects, 'main', config.weights, today, holidays),
     expand: rankByKind(activeUsers, data.projects, 'expand', config.weightsExpand, today, holidays),
     maintenance: rankByKind(activeUsers, data.projects, 'maintenance', config.weightsMaintenance, today, holidays),
+    revise: rankByKind(activeUsers, data.projects, 'revise', config.weightsRevise, today, holidays),
     projectNames,
   }
 }

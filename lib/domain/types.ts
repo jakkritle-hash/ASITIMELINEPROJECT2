@@ -1,11 +1,11 @@
 export type Role = 'Admin' | 'Manager' | 'Member'
 export type SlaStatus = 'on-track' | 'at-risk' | 'overdue' | 'done'
-/** ประเภทโปรเจกต์: 'main' นับคะแนน Performance เท่านั้น; 'expand'/'maintenance' ไม่นับ */
-export type ProjectKind = 'main' | 'expand' | 'maintenance'
-export const PROJECT_KINDS: ProjectKind[] = ['main', 'expand', 'maintenance']
+/** ประเภทโปรเจกต์ — แต่ละประเภทจัดอันดับ Performance แยกกันด้วยน้ำหนักของตัวเอง */
+export type ProjectKind = 'main' | 'expand' | 'maintenance' | 'revise'
+export const PROJECT_KINDS: ProjectKind[] = ['main', 'expand', 'maintenance', 'revise']
 /** normalize ค่าที่รับมา → ProjectKind ที่ถูกต้อง (default 'main') */
 export function toProjectKind(v: unknown): ProjectKind {
-  return v === 'expand' || v === 'maintenance' ? v : 'main'
+  return v === 'expand' || v === 'maintenance' || v === 'revise' ? v : 'main'
 }
 
 export interface User {
@@ -52,6 +52,8 @@ export interface Project {
   kind: ProjectKind
   /** ลำดับการแสดงบน Timeline (น้อย = อยู่บน) — ลากจัดเรียงได้ */
   order?: number
+  /** false = ไม่หักคะแนนความล่าช้า (Overdue) ของโปรเจกต์นี้ — ปรับได้ที่ Control Data (default true) */
+  overduePenalty?: boolean
   archived: boolean
   createdAt: string
   updatedAt: string

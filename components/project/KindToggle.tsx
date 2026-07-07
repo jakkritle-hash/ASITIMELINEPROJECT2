@@ -5,7 +5,8 @@ import type { ProjectKind } from '@/lib/domain/types'
 const OPTIONS: { value: ProjectKind; label: string; hint: string; on: string }[] = [
   { value: 'main', label: 'Main', hint: 'นับคะแนน Performance', on: 'bg-gradient-to-r from-indigo-500 to-blue-600 text-white shadow-sm' },
   { value: 'expand', label: 'Expand', hint: 'งานต่อยอด — ไม่นับคะแนน', on: 'bg-gradient-to-r from-slate-500 to-slate-600 text-white shadow-sm' },
-  { value: 'maintenance', label: 'Maintenance', hint: 'งานดูแลรักษา — ไม่นับคะแนน', on: 'bg-gradient-to-r from-teal-500 to-emerald-600 text-white shadow-sm' },
+  { value: 'maintenance', label: 'Maintenance', hint: 'งานดูแลรักษา — คิดคะแนนแยก', on: 'bg-gradient-to-r from-teal-500 to-emerald-600 text-white shadow-sm' },
+  { value: 'revise', label: 'Revise', hint: 'งานแก้ไข/ปรับปรุง — คิดคะแนนแยก', on: 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-sm' },
 ]
 
 /** ปุ่มสลับ Main / Expand / Maintenance แบบ segmented — ใช้ทั้งตอนสร้างและบนหน้าโปรเจกต์ */

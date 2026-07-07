@@ -5,7 +5,7 @@ import { CONTENT_PAGES } from '@/lib/domain/pages'
 export const TAB_HEADERS = {
   Users: ['id', 'email', 'name', 'role', 'avatarColor', 'active', 'createdAt', 'pageAccess', 'lastSeenAt', 'lastActiveAt'],
   Teams: ['id', 'name', 'memberIds', 'leadUserId', 'createdAt'],
-  Projects: ['id', 'name', 'teamId', 'memberIds', 'ownerUserId', 'startDate', 'dueDate', 'status', 'description', 'kanbanColumns', 'createdAt', 'updatedAt', 'archived', 'departments', 'kind', 'order'],
+  Projects: ['id', 'name', 'teamId', 'memberIds', 'ownerUserId', 'startDate', 'dueDate', 'status', 'description', 'kanbanColumns', 'createdAt', 'updatedAt', 'archived', 'departments', 'kind', 'order', 'overduePenalty'],
   Tasks: ['id', 'projectId', 'title', 'assigneeId', 'columnStatus', 'startDate', 'dueDate', 'slaStatus', 'editCount', 'description', 'order', 'createdAt', 'updatedAt', 'completedAt'],
   ActivityLog: ['id', 'timestamp', 'actorId', 'entityType', 'entityId', 'action', 'field', 'oldValue', 'newValue'],
   Config: ['key', 'value'],
@@ -40,6 +40,7 @@ export function parseProject(r: Record<string, string>): Project {
     kanbanColumns: csvToArr(r.kanbanColumns), departments: csvToArr(r.departments),
     kind: toProjectKind(r.kind), // ค่าเดิมที่ไม่มีคอลัมน์ → main
     order: Number(r.order) || 0,
+    overduePenalty: r.overduePenalty !== 'false', // default true (แถวเก่า/ค่าว่าง → คิด Overdue)
     archived: toBool(r.archived), createdAt: r.createdAt, updatedAt: r.updatedAt,
   }
 }
@@ -68,7 +69,7 @@ export function serializeTeam(t: Team): Record<string, string> {
   return { ...t, memberIds: arrToCsv(t.memberIds) }
 }
 export function serializeProject(p: Project): Record<string, string> {
-  return { ...p, memberIds: arrToCsv(p.memberIds), kanbanColumns: arrToCsv(p.kanbanColumns), departments: arrToCsv(p.departments), order: String(p.order ?? 0), archived: String(p.archived) }
+  return { ...p, memberIds: arrToCsv(p.memberIds), kanbanColumns: arrToCsv(p.kanbanColumns), departments: arrToCsv(p.departments), order: String(p.order ?? 0), overduePenalty: String(p.overduePenalty !== false), archived: String(p.archived) }
 }
 export function serializeTask(t: Task): Record<string, string> {
   return { ...t, editCount: String(t.editCount), order: String(t.order) }

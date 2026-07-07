@@ -201,6 +201,22 @@ export async function setProjectKindAction(projectId: string, kind: ProjectKind)
   return { ok: true }
 }
 
+/** เปิด/ปิดการหักคะแนนความล่าช้า (Overdue) รายโปรเจกต์ — Admin เท่านั้น (กระทบคะแนนทุกคน) */
+export async function setProjectOverduePenaltyAction(projectId: string, on: boolean): Promise<CreateResult> {
+  if (!sheetsConfigured()) return { ok: true }
+  const user = await getCurrentUser()
+  if (!user) return { ok: false, error: 'unauthenticated' }
+  if (user.role !== 'Admin') return { ok: false, error: 'เฉพาะ Admin เท่านั้น' }
+  const project = (await getTab('Projects')).map(parseProject).find((p) => p.id === projectId)
+  if (!project) return { ok: false, error: 'not found' }
+  const updated: Project = { ...project, overduePenalty: on, updatedAt: new Date().toISOString() }
+  await updateRowById('Projects', projectId, serializeProject(updated), P_HEADER)
+  revalidatePath('/performance')
+  revalidatePath('/admin/control')
+  invalidateSheetCache()
+  return { ok: true }
+}
+
 /** จัดลำดับโปรเจกต์บน Timeline — เขียน order ตามลำดับ id ที่ส่งมา (เฉพาะที่เปลี่ยน) */
 export async function reorderProjectsAction(orderedIds: string[]): Promise<CreateResult> {
   if (!sheetsConfigured()) return { ok: true }

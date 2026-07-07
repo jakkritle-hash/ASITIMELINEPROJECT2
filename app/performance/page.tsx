@@ -11,18 +11,18 @@ export default async function PerformancePage() {
   if (!user) return null
   if (!canAccessPage(user, 'performance')) return <NoAccess user={user} />
 
-  const { main, expand, maintenance, projectNames } = await getPerformance()
+  const { main, expand, maintenance, revise, projectNames } = await getPerformance()
 
   return (
     <main className="w-full px-4 py-6 sm:px-6 lg:px-8">
       <header className="animate-rise mb-5">
         <h1 className="text-lg font-semibold text-gray-900 sm:text-xl">Individual Performance</h1>
         <p className="text-xs text-gray-500">
-          จัดอันดับผลงานรายบุคคล 🏆 — คิดคะแนน<span className="font-semibold text-indigo-600">แยกทีละโปรเจกต์แล้วรวมกัน</span> และ<span className="font-semibold text-indigo-600">แยกตามประเภท Main / Expand / Maintenance</span>
+          จัดอันดับผลงานรายบุคคล 🏆 — คิดคะแนน<span className="font-semibold text-indigo-600">แยกทีละโปรเจกต์แล้วรวมกัน</span> และ<span className="font-semibold text-indigo-600">แยกตามประเภท Main / Expand / Maintenance / Revise</span>
         </p>
       </header>
 
-      <PerformanceBoard main={main} expand={expand} maintenance={maintenance} projectNames={projectNames} />
+      <PerformanceBoard main={main} expand={expand} maintenance={maintenance} revise={revise} projectNames={projectNames} />
     </main>
   )
 }

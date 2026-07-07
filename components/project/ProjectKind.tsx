@@ -54,8 +54,14 @@ export function KindBadge({ kind }: { kind: Kind }) {
     )
   if (kind === 'maintenance')
     return (
-      <span className="rounded-full bg-teal-50 px-2 py-0.5 text-[11px] font-medium text-teal-600 ring-1 ring-teal-100" title="งานดูแลรักษา — ไม่นับคะแนน Performance">
+      <span className="rounded-full bg-teal-50 px-2 py-0.5 text-[11px] font-medium text-teal-600 ring-1 ring-teal-100" title="งานดูแลรักษา — คิดคะแนนแยก">
         Maintenance
+      </span>
+    )
+  if (kind === 'revise')
+    return (
+      <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-600 ring-1 ring-amber-100" title="งานแก้ไข/ปรับปรุง — คิดคะแนนแยก">
+        Revise
       </span>
     )
   return (

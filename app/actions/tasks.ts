@@ -151,6 +151,24 @@ export async function deleteTaskAction(taskId: string): Promise<ActionResult> {
   return { ok: true }
 }
 
+/** จัดลำดับ tasks ภายในโปรเจกต์ (ลากขึ้น-ลงบน Timeline) — เขียนเฉพาะแถวที่ลำดับเปลี่ยน */
+export async function reorderTasksAction(projectId: string, orderedIds: string[]): Promise<ActionResult> {
+  if (!sheetsConfigured()) return { ok: true }
+  const user = await getCurrentUser()
+  if (!user) return { ok: false, error: 'unauthenticated' }
+  const tasks = (await getTab('Tasks')).map(parseTask).filter((t) => t.projectId === projectId)
+  const byId = new Map(tasks.map((t) => [t.id, t]))
+  for (let i = 0; i < orderedIds.length; i++) {
+    const t = byId.get(orderedIds[i])
+    if (!t || t.order === i) continue
+    await updateRowById('Tasks', t.id, serializeTask({ ...t, order: i }), HEADER)
+  }
+  revalidatePath(`/projects/${projectId}`)
+  revalidatePath('/')
+  invalidateSheetCache()
+  return { ok: true }
+}
+
 /** ย้าย task ไปคอลัมน์ใหม่ — log action=move + คำนวณ SLA ใหม่ */
 export async function moveTaskAction(taskId: string, toColumn: string): Promise<ActionResult> {
   if (!sheetsConfigured()) return { ok: true }

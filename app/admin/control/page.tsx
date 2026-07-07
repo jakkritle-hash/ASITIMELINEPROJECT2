@@ -1,10 +1,12 @@
 import { getAppConfig } from '@/lib/data/config'
+import { getDashboardData } from '@/lib/data/dashboard'
 import { getCurrentUser } from '@/lib/auth/session'
 import { canAccessPage, canManageMembers } from '@/lib/domain/permissions'
 import { setDepartmentsAction, setHolidaysAction, setKanbanColumnsAction } from '@/app/actions/config'
 import { ListEditor } from '@/components/admin/ListEditor'
 import { WeightsEditor } from '@/components/admin/WeightsEditor'
 import { DataTools } from '@/components/admin/DataTools'
+import { OverdueMatrix } from '@/components/admin/OverdueMatrix'
 import { NoAccess } from '@/components/layout/NoAccess'
 
 export const dynamic = 'force-dynamic'
@@ -15,7 +17,8 @@ export default async function ControlDataPage() {
   if (!canAccessPage(user, 'control')) return <NoAccess user={user} />
   const canEdit = canManageMembers(user)
 
-  const config = await getAppConfig()
+  const [config, dashboard] = await Promise.all([getAppConfig(), getDashboardData()])
+  const overdueRows = dashboard.projects.map((p) => ({ id: p.id, name: p.name, kind: p.kind, overduePenalty: p.overduePenalty !== false }))
 
   return (
     <main className="w-full px-4 py-6 sm:px-6 lg:px-8">
@@ -56,6 +59,22 @@ export default async function ControlDataPage() {
           badge="ปรับสด"
         >
           <WeightsEditor initial={config.weightsMaintenance} kind="maintenance" readOnly={!canEdit} />
+        </Section>
+
+        <Section
+          title="Scoring Weights · Revise"
+          desc="น้ำหนักคะแนนของโปรเจกต์ Revise (งานแก้ไข/ปรับปรุง) — คิดแยกจาก Main"
+          badge="ปรับสด"
+        >
+          <WeightsEditor initial={config.weightsRevise} kind="revise" readOnly={!canEdit} />
+        </Section>
+
+        <Section
+          title="การหักคะแนน Overdue รายโปรเจกต์"
+          desc="เลือกว่าโปรเจกต์ไหน 'หักคะแนนความล่าช้า' หรือไม่ — มีผลต่อคะแนนรายบุคคลในหน้า Performance ทันที"
+          badge={`${overdueRows.filter((r) => r.overduePenalty).length}/${overdueRows.length} หัก`}
+        >
+          <OverdueMatrix projects={overdueRows} readOnly={!canEdit} />
         </Section>
 
         <Section

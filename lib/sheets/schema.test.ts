@@ -28,6 +28,10 @@ describe('parse', () => {
     expect(parseProject({ id: 'p2', kind: 'expand' } as never).kind).toBe('expand')
     expect(parseProject({ id: 'p3', kind: 'maintenance' } as never).kind).toBe('maintenance')
     expect(parseProject({ id: 'p4', kind: 'garbage' } as never).kind).toBe('main') // ค่าแปลก → main
+    expect(parseProject({ id: 'p5', kind: 'revise' } as never).kind).toBe('revise')
+    // overduePenalty: default true (แถวเก่า/ว่าง), ปิดเมื่อ 'false' เท่านั้น
+    expect(p.overduePenalty).toBe(true)
+    expect(parseProject({ id: 'p6', overduePenalty: 'false' } as never).overduePenalty).toBe(false)
     const t = parseTask({ id: 'k1', projectId: 'p1', title: 'T', assigneeId: 'u1', columnStatus: 'To Do', startDate: '', dueDate: '', slaStatus: 'on-track', editCount: '3', description: '', order: '2', createdAt: '', updatedAt: '' })
     expect(t.editCount).toBe(3)
     expect(t.order).toBe(2)
