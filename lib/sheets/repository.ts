@@ -89,19 +89,19 @@ async function ensureUsersPageAccessSchema(): Promise<void> {
   usersPageAccessSchemaChecked = true
 }
 
-/** เติมคอลัมน์ header 'kind' ให้ Projects ถ้ายังไม่มี (แถวเก่าจะอ่านเป็น '' → parse เป็น 'main')
- *  แก้บั๊ก: เขียน kind ลงชีตแล้วอ่านกลับไม่เจอเพราะ header ยังไม่มีคอลัมน์นี้ */
+/** เติมคอลัมน์ header ที่ขาด (kind, order) ให้ Projects — แถวเก่าอ่านเป็น '' แล้ว parse เป็นค่า default */
 async function ensureProjectsKindSchema(): Promise<void> {
   if (projectsKindSchemaChecked) return
   const values = await getRawValues('Projects')
   const header = values[0] ?? []
-  if (header.length > 0 && !header.includes('kind')) {
+  const missing = ['kind', 'order'].filter((c) => !header.includes(c))
+  if (header.length > 0 && missing.length > 0) {
     const sheets = getSheetsClient()
     await sheets.spreadsheets.values.update({
       spreadsheetId: getSheetId(),
       range: 'Projects!A1',
       valueInputOption: 'RAW',
-      requestBody: { values: [[...header, 'kind']] },
+      requestBody: { values: [[...header, ...missing]] },
     })
   }
   projectsKindSchemaChecked = true

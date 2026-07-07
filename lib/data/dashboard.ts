@@ -96,6 +96,8 @@ async function resolveHolidays(): Promise<string[]> {
 export async function getDashboardData(now: Date = new Date()): Promise<DashboardData> {
   const [{ users, projects, tasks }, holidays] = await Promise.all([loadRaw(), resolveHolidays()])
   const enriched = enrich(users, projects, tasks, now, holidays)
+  // เรียงตามลำดับที่จัดเอง (order น้อย = บน) ตามด้วยวันสร้าง/ id เป็น tiebreak
+  enriched.sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id))
   const totalWorkingDays = enriched.reduce((sum, p) => sum + p.workingDays, 0)
   return { projects: enriched, usingFixtures: !sheetsConfigured(), totalWorkingDays }
 }

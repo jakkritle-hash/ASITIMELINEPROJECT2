@@ -76,6 +76,7 @@ export async function createProjectAction(input: NewProjectInput): Promise<Creat
     kanbanColumns: config.kanbanColumns,
     departments: sanitizeDepartments(input.departments || [], config.departments),
     kind: toProjectKind(input.kind),
+    order: existing.length, // โปรเจกต์ใหม่ต่อท้าย
     archived: false,
     createdAt: now,
     updatedAt: now,
@@ -196,6 +197,24 @@ export async function setProjectKindAction(projectId: string, kind: ProjectKind)
   revalidatePath('/')
   revalidatePath('/performance')
   revalidatePath(`/projects/${projectId}`)
+  invalidateSheetCache()
+  return { ok: true }
+}
+
+/** จัดลำดับโปรเจกต์บน Timeline — เขียน order ตามลำดับ id ที่ส่งมา (เฉพาะที่เปลี่ยน) */
+export async function reorderProjectsAction(orderedIds: string[]): Promise<CreateResult> {
+  if (!sheetsConfigured()) return { ok: true }
+  const user = await getCurrentUser()
+  if (!user) return { ok: false, error: 'unauthenticated' }
+  const projects = (await getTab('Projects')).map(parseProject)
+  const byId = new Map(projects.map((p) => [p.id, p]))
+  const now = new Date().toISOString()
+  for (let i = 0; i < orderedIds.length; i++) {
+    const p = byId.get(orderedIds[i])
+    if (!p || (p.order ?? 0) === i) continue // เขียนเฉพาะที่ลำดับเปลี่ยนจริง
+    await updateRowById('Projects', p.id, serializeProject({ ...p, order: i, updatedAt: now }), P_HEADER)
+  }
+  revalidatePath('/')
   invalidateSheetCache()
   return { ok: true }
 }

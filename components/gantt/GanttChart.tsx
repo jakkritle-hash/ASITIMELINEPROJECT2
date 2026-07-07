@@ -10,6 +10,7 @@ import { segmentsForLayer } from '@/lib/domain/ganttHeader'
 import { layersForZoom, type ZoomLevel } from '@/lib/domain/timeLayers'
 import { STATUS_META } from '@/components/ui/StatusBadge'
 import { Avatar, AvatarGroup } from '@/components/ui/Avatar'
+import { reorderProjectsAction } from '@/app/actions/projects'
 import { ZoomControl } from './ZoomControl'
 
 const LABEL_W = 360
@@ -23,11 +24,29 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
   const [zoom, setZoom] = useState<ZoomLevel>('month')
   const [showArchived, setShowArchived] = useState(false)
   const [kindFilter, setKindFilter] = useState<'all' | ProjectKind>('all')
+  // ลำดับที่จัดเอง (ลากขึ้น-ลง) — เริ่มจากลำดับที่ server ส่งมา, self-heal โปรเจกต์ใหม่/ถูกลบ
+  const [order, setOrder] = useState<string[]>(() => projects.map((p) => p.id))
+  const [dragId, setDragId] = useState<string | null>(null)
+  const posById = new Map(order.map((id, i) => [id, i]))
+  const orderedProjects = [...projects].sort((a, b) => (posById.get(a.id) ?? 1e9) - (posById.get(b.id) ?? 1e9))
+
   const archivedCount = projects.filter((p) => p.archived).length
-  const visible = projects.filter(
+  const visible = orderedProjects.filter(
     (p) => (showArchived || !p.archived) && (kindFilter === 'all' || p.kind === kindFilter),
   )
   const [expanded, setExpanded] = useState<Set<string>>(new Set(visible[0] ? [visible[0].id] : []))
+
+  function reorderTo(targetId: string) {
+    if (!dragId || dragId === targetId) return setDragId(null)
+    const ids = orderedProjects.map((p) => p.id)
+    const from = ids.indexOf(dragId)
+    const to = ids.indexOf(targetId)
+    if (from < 0 || to < 0) return setDragId(null)
+    ids.splice(to, 0, ids.splice(from, 1)[0])
+    setOrder(ids)
+    setDragId(null)
+    void reorderProjectsAction(ids) // persist (revalidate '/' ให้คนอื่นเห็นตอนโหลดถัดไป)
+  }
 
   const range: DateRange | null = timelineRange([
     ...visible.map((p) => ({ startDate: p.startDate, dueDate: p.dueDate })),
@@ -138,9 +157,27 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
             const isOpen = expanded.has(p.id)
             return (
               <div key={p.id}>
-                {/* Project row */}
-                <div className="group flex items-center border-b border-gray-50 transition-colors hover:bg-indigo-50/20">
+                {/* Project row — วางทับได้เพื่อจัดลำดับ (drop target) */}
+                <div
+                  onDragOver={(e) => { if (dragId) e.preventDefault() }}
+                  onDrop={() => reorderTo(p.id)}
+                  className={
+                    'group flex items-center border-b border-gray-50 transition-colors hover:bg-indigo-50/20 ' +
+                    (dragId === p.id ? 'opacity-40 ' : '') +
+                    (dragId && dragId !== p.id ? 'hover:bg-indigo-100/60' : '')
+                  }
+                >
                   <div className="sticky left-0 z-20 flex shrink-0 items-center gap-2 border-r border-gray-100 bg-white px-3 py-2 shadow-[6px_0_12px_-10px_rgba(15,23,42,0.25)] transition-colors group-hover:bg-indigo-50/40" style={{ width: LABEL_W }}>
+                    {/* ที่จับสำหรับลากจัดลำดับ */}
+                    <span
+                      draggable
+                      onDragStart={(e) => { setDragId(p.id); e.dataTransfer.effectAllowed = 'move' }}
+                      onDragEnd={() => setDragId(null)}
+                      title="ลากเพื่อจัดลำดับ"
+                      className="shrink-0 cursor-grab select-none px-0.5 text-gray-300 hover:text-gray-500 active:cursor-grabbing"
+                    >
+                      ⠿
+                    </span>
                     <button
                       onClick={() => toggle(p.id)}
                       className="flex h-4 w-4 items-center justify-center rounded bg-gray-100 text-xs font-bold text-gray-600 hover:bg-gray-200"

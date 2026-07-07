@@ -50,6 +50,8 @@ export interface Project {
   departments: string[]
   /** 'main' = นับคะแนน Performance, 'expand' = ไม่นับ */
   kind: ProjectKind
+  /** ลำดับการแสดงบน Timeline (น้อย = อยู่บน) — ลากจัดเรียงได้ */
+  order?: number
   archived: boolean
   createdAt: string
   updatedAt: string
