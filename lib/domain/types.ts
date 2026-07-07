@@ -23,6 +23,9 @@ export interface User {
    * - Admin เห็นทุกหน้าเสมอโดยไม่สนค่านี้
    */
   pageAccess: string[]
+  /** presence: เวลาล่าสุดที่ heartbeat (ISO) และเวลาล่าสุดที่ tab กำลัง active/ดูอยู่ */
+  lastSeenAt?: string
+  lastActiveAt?: string
 }
 
 export interface Team {

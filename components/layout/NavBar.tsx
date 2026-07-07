@@ -4,6 +4,7 @@ import { getNotifications } from '@/lib/data/notifications'
 import { getCurrentUser } from '@/lib/auth/session'
 import { accessiblePageKeys } from '@/lib/domain/permissions'
 import { Bell } from './Bell'
+import { Presence } from './Presence'
 import { NavLinks } from './NavLinks'
 import { AccountMenu } from './AccountMenu'
 
@@ -49,6 +50,7 @@ export async function NavBar() {
         </div>
 
         <div className="order-2 ml-auto flex items-center gap-2.5 sm:order-3">
+          <Presence />
           <Bell items={items} unread={unread} />
           <AccountMenu user={user} />
         </div>

@@ -64,13 +64,25 @@ async function ensureUsersPageAccessSchema(): Promise<void> {
 
   const values = await getRawValues('Users')
   const migration = migrateUsersPageAccessValues(values)
+  const sheets = getSheetsClient()
   if (migration.migrated) {
-    const sheets = getSheetsClient()
     await sheets.spreadsheets.values.update({
       spreadsheetId: getSheetId(),
       range: 'Users!A1',
       valueInputOption: 'RAW',
       requestBody: { values: migration.values },
+    })
+  }
+
+  // เติมคอลัมน์ presence ถ้ายังไม่มี (lastSeenAt / lastActiveAt)
+  const header = (migration.migrated ? migration.values[0] : values[0]) ?? []
+  const missing = ['lastSeenAt', 'lastActiveAt'].filter((c) => !header.includes(c))
+  if (header.length > 0 && missing.length > 0) {
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: getSheetId(),
+      range: 'Users!A1',
+      valueInputOption: 'RAW',
+      requestBody: { values: [[...header, ...missing]] },
     })
   }
 

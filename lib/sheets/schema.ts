@@ -3,7 +3,7 @@ import { toProjectKind } from '@/lib/domain/types'
 import { CONTENT_PAGES } from '@/lib/domain/pages'
 
 export const TAB_HEADERS = {
-  Users: ['id', 'email', 'name', 'role', 'avatarColor', 'active', 'createdAt', 'pageAccess'],
+  Users: ['id', 'email', 'name', 'role', 'avatarColor', 'active', 'createdAt', 'pageAccess', 'lastSeenAt', 'lastActiveAt'],
   Teams: ['id', 'name', 'memberIds', 'leadUserId', 'createdAt'],
   Projects: ['id', 'name', 'teamId', 'memberIds', 'ownerUserId', 'startDate', 'dueDate', 'status', 'description', 'kanbanColumns', 'createdAt', 'updatedAt', 'archived', 'departments', 'kind'],
   Tasks: ['id', 'projectId', 'title', 'assigneeId', 'columnStatus', 'startDate', 'dueDate', 'slaStatus', 'editCount', 'description', 'order', 'createdAt', 'updatedAt', 'completedAt'],
@@ -28,7 +28,7 @@ function parsePageAccess(r: Record<string, string>): string[] {
 }
 
 export function parseUser(r: Record<string, string>): User {
-  return { id: r.id, email: r.email, name: r.name, role: (r.role as Role) || 'Member', avatarColor: r.avatarColor || '#94a3b8', active: toBool(r.active), createdAt: r.createdAt, pageAccess: parsePageAccess(r) }
+  return { id: r.id, email: r.email, name: r.name, role: (r.role as Role) || 'Member', avatarColor: r.avatarColor || '#94a3b8', active: toBool(r.active), createdAt: r.createdAt, pageAccess: parsePageAccess(r), lastSeenAt: r.lastSeenAt || '', lastActiveAt: r.lastActiveAt || '' }
 }
 export function parseTeam(r: Record<string, string>): Team {
   return { id: r.id, name: r.name, memberIds: csvToArr(r.memberIds), leadUserId: r.leadUserId || '', createdAt: r.createdAt }
