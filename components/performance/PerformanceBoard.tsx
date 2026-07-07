@@ -34,10 +34,27 @@ export function PerformanceBoard({
   const data = tab === 'main' ? main : tab === 'expand' ? expand : maintenance
   const counts: Record<ProjectKind, number> = { main: main.length, expand: expand.length, maintenance: maintenance.length }
 
+  /** ดาวน์โหลดอันดับของแท็บปัจจุบันเป็น CSV (มี BOM ให้เปิดใน Excel ภาษาไทยไม่เพี้ยน) */
+  function exportCsv() {
+    const esc = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`
+    const rows = [
+      ['อันดับ', 'ชื่อ', 'บทบาท', 'คะแนน', 'Dept load', 'โปรเจกต์', 'งานที่รับ', 'งานเสร็จ', 'สำเร็จ%', 'วันทำการ'],
+      ...data.map((s) => [s.rank, s.user.name, s.user.role, s.score, s.departmentLoad, s.projectCount, s.taskTotal, s.taskDone, s.completion, s.workingDays]),
+    ]
+    const csv = '﻿' + rows.map((r) => r.map(esc).join(',')).join('\r\n')
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `performance-${tab}-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
       {/* แท็บเลือกประเภท — คะแนนแต่ละประเภทคิดแยกกัน */}
-      <div className="mb-4 inline-flex flex-wrap gap-1 rounded-xl bg-gray-100 p-1 ring-1 ring-gray-200">
+      <div className="inline-flex flex-wrap gap-1 rounded-xl bg-gray-100 p-1 ring-1 ring-gray-200">
         {TABS.map((t) => {
           const active = tab === t.key
           return (
@@ -56,6 +73,15 @@ export function PerformanceBoard({
             </button>
           )
         })}
+      </div>
+      <button
+        onClick={exportCsv}
+        disabled={data.length === 0}
+        className="btn-press rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 transition hover:border-indigo-200 hover:text-indigo-600 disabled:opacity-40"
+        title="ดาวน์โหลดอันดับแท็บนี้เป็นไฟล์ CSV"
+      >
+        📥 Export CSV
+      </button>
       </div>
       <p className="mb-4 text-[11px] text-gray-400">
         กำลังแสดงคะแนนของ <span className="font-medium text-gray-500">{TABS.find((t) => t.key === tab)?.label}</span> — คิดจากโปรเจกต์ประเภทนี้ด้วยน้ำหนักเฉพาะของมัน (ตั้งค่าได้ที่ Control Data)

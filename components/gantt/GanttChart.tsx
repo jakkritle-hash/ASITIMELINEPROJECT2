@@ -30,9 +30,16 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
   const posById = new Map(order.map((id, i) => [id, i]))
   const orderedProjects = [...projects].sort((a, b) => (posById.get(a.id) ?? 1e9) - (posById.get(b.id) ?? 1e9))
 
+  const [query, setQuery] = useState('')
+  const q = query.trim().toLowerCase()
+
   const archivedCount = projects.filter((p) => p.archived).length
   const visible = orderedProjects.filter(
-    (p) => (showArchived || !p.archived) && (kindFilter === 'all' || p.kind === kindFilter),
+    (p) =>
+      (showArchived || !p.archived) &&
+      (kindFilter === 'all' || p.kind === kindFilter) &&
+      // ค้นหา: ชื่อโปรเจกต์ หรือชื่องานภายใน
+      (!q || p.name.toLowerCase().includes(q) || p.tasks.some((t) => t.title.toLowerCase().includes(q))),
   )
   const [expanded, setExpanded] = useState<Set<string>>(new Set(visible[0] ? [visible[0].id] : []))
 
@@ -90,6 +97,25 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
             )
           })}
         </div>
+        {/* ค้นหาโปรเจกต์/งาน */}
+        <div className="relative">
+          <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-[11px] text-gray-400">🔍</span>
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="ค้นหาโปรเจกต์/งาน…"
+            className="w-40 rounded-lg border border-gray-200 bg-white py-1 pl-7 pr-6 text-[11px] outline-none transition focus:w-52 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-200/50"
+          />
+          {query && (
+            <button
+              onClick={() => setQuery('')}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[11px] text-gray-300 hover:text-gray-500"
+              title="ล้างคำค้น"
+            >
+              ✕
+            </button>
+          )}
+        </div>
       </div>
       <ZoomControl zoom={zoom} onChange={setZoom} />
     </div>
@@ -108,6 +134,20 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
   const timelineW = Math.max(600, Math.round(totalDays * PX_PER_DAY[zoom]))
   const layers = layersForZoom(zoom)
   const today = todayIso()
+
+  // แถบแรเงาเสาร์-อาทิตย์ (ข้ามเมื่อ zoom ละเอียดต่ำจนมองไม่ออก)
+  const weekendBands: { leftPct: number; widthPct: number }[] = []
+  if (PX_PER_DAY[zoom] >= 4) {
+    const cur = new Date(range.start + 'T00:00:00')
+    const end = new Date(range.end + 'T00:00:00')
+    while (cur <= end) {
+      if (cur.getDay() === 6 || cur.getDay() === 0) {
+        const iso = cur.toISOString().slice(0, 10)
+        weekendBands.push(barMetrics(iso, iso, range))
+      }
+      cur.setDate(cur.getDate() + 1)
+    }
+  }
   const todayInRange = today >= range.start && today <= range.end
   const todayLeft = todayInRange ? barMetrics(today, today, range).leftPct : null
 
@@ -150,7 +190,15 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
             ))}
           </div>
 
-          {/* Rows */}
+          {/* Rows — ครอบด้วย relative เพื่อวางแถบแรเงาเสาร์-อาทิตย์ไว้ด้านหลังทุกแถว */}
+          <div className="relative">
+            {weekendBands.length > 0 && (
+              <div aria-hidden className="pointer-events-none absolute inset-y-0" style={{ left: LABEL_W, width: timelineW }}>
+                {weekendBands.map((b, i) => (
+                  <div key={i} className="absolute inset-y-0 bg-slate-400/[0.08]" style={{ left: `${b.leftPct}%`, width: `${b.widthPct}%` }} />
+                ))}
+              </div>
+            )}
           {visible.map((p) => {
             const pm = barMetrics(p.startDate, p.dueDate, range)
             const pMeta = STATUS_META[p.status]
@@ -260,7 +308,7 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
                           <div
                             className="absolute top-1/2 flex -translate-y-1/2 items-center justify-end rounded-full pr-1.5 text-[9px] text-white shadow-sm"
                             style={{ left: `${tm.leftPct}%`, width: `${tm.widthPct}%`, height: 15, background: `linear-gradient(90deg, ${meta.color}cc, ${meta.color})` }}
-                            title={`${meta.label} · ครบ ${t.dueDate}`}
+                            title={`${t.title}\n${meta.label} · ${t.startDate} → ${t.dueDate}${t.assignee ? ` · ${t.assignee.name}` : ''}`}
                           >
                             {meta.symbol}
                           </div>
@@ -271,6 +319,7 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
               </div>
             )
           })}
+          </div>
         </div>
       </div>
 

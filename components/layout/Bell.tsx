@@ -94,7 +94,7 @@ export function Bell({ items, unread: serverUnread }: { items: NotificationItem[
 
       {open && (
         <>
-          <div className="absolute right-0 z-50 mt-2 max-h-[70vh] w-80 overflow-y-auto rounded-xl border border-gray-100 bg-white shadow-xl">
+          <div className="animate-rise absolute right-0 z-50 mt-2 max-h-[70vh] w-80 overflow-y-auto rounded-2xl bg-white/95 shadow-2xl shadow-indigo-500/10 ring-1 ring-slate-900/[0.06] backdrop-blur-xl">
             <div className="sticky top-0 flex items-center justify-between border-b border-gray-100 bg-white px-4 py-2.5">
               <span className="text-sm font-semibold text-gray-800">การแจ้งเตือน{unread > 0 && ` (${unread})`}</span>
               {unread > 0 && (
