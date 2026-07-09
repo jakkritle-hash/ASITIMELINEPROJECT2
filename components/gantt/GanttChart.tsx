@@ -17,6 +17,14 @@ import { ZoomControl } from './ZoomControl'
 const LABEL_W = 360
 const PX_PER_DAY: Record<ZoomLevel, number> = { year: 2.2, quarter: 4, month: 9, week: 22, day: 44 }
 
+/** ป้ายประเภทโปรเจกต์ — แสดงทุกแถวเสมอ (รวม Main) ให้แยกประเภทออกทันที */
+const KIND_TAG: Record<ProjectKind, { label: string; cls: string; hint: string }> = {
+  main: { label: 'Main', cls: 'bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100', hint: 'โปรเจกต์หลัก — นับคะแนนหลัก' },
+  expand: { label: 'Expand', cls: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200', hint: 'งานต่อยอด — คิดคะแนนแยก' },
+  maintenance: { label: 'Maint', cls: 'bg-teal-50 text-teal-600 ring-1 ring-teal-100', hint: 'งานดูแลรักษา — คิดคะแนนแยก' },
+  revise: { label: 'Revise', cls: 'bg-amber-50 text-amber-600 ring-1 ring-amber-100', hint: 'งานแก้ไข/ปรับปรุง — คิดคะแนนแยก' },
+}
+
 function todayIso() {
   return new Date().toISOString().slice(0, 10)
 }
@@ -260,21 +268,9 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
                     <Link href={`/projects/${p.id}`} className="min-w-0 flex-1 truncate text-sm font-semibold text-gray-800 hover:text-blue-600 hover:underline" title={p.name}>
                       {p.name}
                     </Link>
-                    {p.kind === 'expand' && (
-                      <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500" title="งานต่อยอด — ไม่นับคะแนน Performance">
-                        Expand
-                      </span>
-                    )}
-                    {p.kind === 'maintenance' && (
-                      <span className="shrink-0 rounded bg-teal-50 px-1.5 py-0.5 text-[10px] font-medium text-teal-600" title="งานดูแลรักษา — คิดคะแนนแยก">
-                        Maint
-                      </span>
-                    )}
-                    {p.kind === 'revise' && (
-                      <span className="shrink-0 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-600" title="งานแก้ไข/ปรับปรุง — คิดคะแนนแยก">
-                        Revise
-                      </span>
-                    )}
+                    <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${KIND_TAG[p.kind].cls}`} title={KIND_TAG[p.kind].hint}>
+                      {KIND_TAG[p.kind].label}
+                    </span>
                     <span className="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-500" title="วันทำการรวมของโปรเจกต์">
                       {p.workingDays}d
                     </span>
