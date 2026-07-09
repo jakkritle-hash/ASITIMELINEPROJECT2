@@ -31,7 +31,8 @@ function todayIso() {
 
 export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
   const [zoom, setZoom] = useState<ZoomLevel>('month')
-  const [showArchived, setShowArchived] = useState(false)
+  // สถานะ 3 ทาง: all = เห็นทุกโปรเจกต์, active = เฉพาะที่ยังค้าง, approved = เฉพาะที่ Approve แล้ว
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'approved'>('active')
   const [kindFilter, setKindFilter] = useState<'all' | ProjectKind>('all')
   // ลำดับที่จัดเอง (ลากขึ้น-ลง) — เริ่มจากลำดับที่ server ส่งมา, self-heal โปรเจกต์ใหม่/ถูกลบ
   const [order, setOrder] = useState<string[]>(() => projects.map((p) => p.id))
@@ -43,9 +44,10 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
   const q = query.trim().toLowerCase()
 
   const archivedCount = projects.filter((p) => p.archived).length
+  const activeCount = projects.length - archivedCount
   const visible = orderedProjects.filter(
     (p) =>
-      (showArchived || !p.archived) &&
+      (statusFilter === 'all' || (statusFilter === 'approved' ? p.archived : !p.archived)) &&
       (kindFilter === 'all' || p.kind === kindFilter) &&
       // ค้นหา: ชื่อโปรเจกต์ หรือชื่องานภายใน
       (!q || p.name.toLowerCase().includes(q) || p.tasks.some((t) => t.title.toLowerCase().includes(q))),
@@ -100,17 +102,27 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
           <span className="h-4 w-1 rounded-full bg-gradient-to-b from-indigo-500 to-blue-600" />
           Project Timeline
         </span>
-        {archivedCount > 0 && (
-          <button
-            onClick={() => setShowArchived((v) => !v)}
-            className={
-              'rounded-md px-2 py-1 text-[11px] transition ' +
-              (showArchived ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200')
-            }
-          >
-            {showArchived ? 'Hide Approved' : `✅ Approved (${archivedCount})`}
-          </button>
-        )}
+        {/* ตัวกรองสถานะ 3 ทาง: ทั้งหมด / ค้างอยู่ / Approved — ใช้ร่วมกับตัวกรองประเภทได้ */}
+        <div className="inline-flex rounded-lg bg-gray-100 p-0.5 ring-1 ring-gray-200">
+          {(
+            [
+              { key: 'all', label: `ทั้งหมด (${projects.length})`, on: 'bg-white text-gray-700 shadow-sm ring-1 ring-gray-200' },
+              { key: 'active', label: `🕒 ค้างอยู่ (${activeCount})`, on: 'bg-gradient-to-r from-indigo-500 to-blue-600 text-white shadow-sm' },
+              { key: 'approved', label: `✅ Approved (${archivedCount})`, on: 'bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-sm' },
+            ] as const
+          ).map((s) => (
+            <button
+              key={s.key}
+              onClick={() => setStatusFilter(s.key)}
+              className={
+                'rounded-md px-2 py-0.5 text-[11px] font-medium transition ' +
+                (statusFilter === s.key ? s.on : 'text-gray-500 hover:text-gray-700')
+              }
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
         {/* กรองตามประเภทโปรเจกต์ */}
         <div className="inline-flex rounded-lg bg-gray-100 p-0.5 ring-1 ring-gray-200">
           {(['all', 'main', 'expand', 'maintenance', 'revise'] as const).map((k) => {
