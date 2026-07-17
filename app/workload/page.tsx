@@ -3,6 +3,8 @@ import { getCurrentUser } from '@/lib/auth/session'
 import { canAccessPage } from '@/lib/domain/permissions'
 import { NoAccess } from '@/components/layout/NoAccess'
 import { WorkloadCalendar } from '@/components/performance/WorkloadCalendar'
+import { PageHero } from '@/components/ui/PageHero'
+import { Reveal } from '@/components/ui/Motion'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,14 +17,17 @@ export default async function WorkloadPage() {
 
   return (
     <main className="w-full px-4 py-6 sm:px-6 lg:px-8">
-      <header className="animate-rise mb-5">
-        <h1 className="text-lg font-semibold text-gray-900 sm:text-xl">Workload Calendar</h1>
-        <p className="text-xs text-gray-500">
-          ปฏิทินภาระงานรายบุคคล — ดูว่าใครยุ่ง/ว่างช่วงไหน · ยิ่งเข้ม = งานยิ่งเยอะ · ช่องว่าง = ว่าง · hover เพื่อดูชื่องานของวันนั้น
-        </p>
-      </header>
+      <PageHero
+        title="Workload Calendar"
+        badge="🗓️"
+        gradient="from-teal-500 to-emerald-600"
+        shadow="shadow-teal-500/30"
+        subtitle="ปฏิทินภาระงานรายบุคคล — ดูว่าใครยุ่ง/ว่างช่วงไหน · ยิ่งเข้ม = งานยิ่งเยอะ · ช่องว่าง = ว่าง · hover เพื่อดูชื่องานของวันนั้น"
+      />
 
-      <WorkloadCalendar data={data} />
+      <Reveal delay={0.1} y={22}>
+        <WorkloadCalendar data={data} />
+      </Reveal>
     </main>
   )
 }

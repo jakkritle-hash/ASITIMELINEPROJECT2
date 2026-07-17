@@ -22,20 +22,20 @@ export default function LoginPage() {
         <div className="animate-blob animation-delay-8s absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-sky-200/40 blur-3xl" />
       </div>
 
-      {/* การ์ดกระจก + แถบ accent ไล่เฉดด้านบน */}
-      <div className="animate-rise relative w-full max-w-sm overflow-hidden rounded-2xl bg-white/80 shadow-[0_2px_4px_rgba(15,23,42,0.05),0_24px_48px_-16px_rgba(79,70,229,0.25)] ring-1 ring-slate-900/[0.06] backdrop-blur-xl">
+      {/* การ์ดกระจก + ขอบ conic gradient หมุน */}
+      <div className="animate-rise gradient-ring relative w-full max-w-sm overflow-hidden rounded-2xl shadow-[0_2px_4px_rgba(15,23,42,0.05),0_24px_48px_-16px_rgba(79,70,229,0.25)] backdrop-blur-xl">
         <div className="h-1 w-full bg-gradient-to-r from-indigo-500 via-blue-500 to-sky-400" />
         <div className="p-8">
           {/* โลโก้แบรนด์เดียวกับ NavBar */}
           <div className="mb-5 flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white shadow-md shadow-indigo-500/30 ring-1 ring-inset ring-white/25">
+            <span className="logo-glow flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white ring-1 ring-inset ring-white/25">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />
               </svg>
             </span>
             <div className="leading-tight">
               <h1 className="text-xl font-bold tracking-tight">
-                <span className="bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">ASI</span>
+                <span className="text-shimmer">ASI</span>
                 <span className="text-slate-800"> Project Tracker</span>
               </h1>
               <p className="text-[11px] font-medium text-slate-400">Plan B Media · OOH Ops Console</p>

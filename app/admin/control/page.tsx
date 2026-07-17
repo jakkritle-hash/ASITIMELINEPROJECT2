@@ -8,6 +8,7 @@ import { WeightsEditor } from '@/components/admin/WeightsEditor'
 import { DataTools } from '@/components/admin/DataTools'
 import { OverdueMatrix } from '@/components/admin/OverdueMatrix'
 import { NoAccess } from '@/components/layout/NoAccess'
+import { PageHero } from '@/components/ui/PageHero'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,11 +23,15 @@ export default async function ControlDataPage() {
 
   return (
     <main className="w-full px-4 py-6 sm:px-6 lg:px-8">
-      <header className="animate-rise mb-5">
-        <h1 className="text-lg font-semibold text-gray-900 sm:text-xl">Control Data</h1>
-        <p className="text-xs text-gray-500">ศูนย์ควบคุมข้อมูลหลักของเว็บ — แก้แล้วมีผลทันทีทุกหน้า (เฉพาะ Admin)</p>
-        {!canEdit && <span className="mt-2 inline-flex rounded-md bg-gray-100 px-2 py-1 text-[11px] text-gray-500">Read-only</span>}
-      </header>
+      <PageHero
+        title="Control Data"
+        badge="🎛️"
+        gradient="from-slate-600 to-slate-800"
+        shadow="shadow-slate-500/30"
+        subtitle="ศูนย์ควบคุมข้อมูลหลักของเว็บ — แก้แล้วมีผลทันทีทุกหน้า (เฉพาะ Admin)"
+      >
+        {!canEdit && <span className="rounded-md bg-gray-100 px-2 py-1 text-[11px] text-gray-500">Read-only</span>}
+      </PageHero>
 
       <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr))]">
         <Section
@@ -103,11 +108,11 @@ export default async function ControlDataPage() {
 
 function Section({ title, desc, badge, children }: { title: string; desc: string; badge?: string; children: React.ReactNode }) {
   return (
-    <section className="animate-rise rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100 transition duration-300 hover:shadow-lg hover:shadow-indigo-500/5 hover:ring-indigo-100">
+    <section className="animate-rise glass card-sheen rounded-2xl p-5 transition duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-indigo-500/10">
       <div className="mb-3 flex items-start justify-between gap-2">
         <div>
           <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-900">
-            <span className="h-4 w-1 rounded-full bg-gradient-to-b from-indigo-500 to-blue-600" />
+            <span className="section-tick h-4 w-1 rounded-full" />
             {title}
           </h2>
           <p className="text-[11px] text-gray-400">{desc}</p>

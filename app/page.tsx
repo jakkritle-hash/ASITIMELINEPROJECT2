@@ -7,7 +7,8 @@ import { GanttChart } from '@/components/gantt/GanttChart'
 import { NewProjectDialog } from '@/components/project/NewProjectDialog'
 import { NoAccess } from '@/components/layout/NoAccess'
 import { StatCard } from '@/components/dashboard/StatCard'
-import { LiveClock } from '@/components/dashboard/LiveClock'
+import { Ticker } from '@/components/dashboard/Ticker'
+import { PageHero } from '@/components/ui/PageHero'
 import { Reveal } from '@/components/ui/Motion'
 
 export const dynamic = 'force-dynamic'
@@ -46,22 +47,41 @@ export default async function DashboardPage() {
   return (
     <main className="w-full px-4 py-6 sm:px-6 lg:px-8">
       {/* ── Hero: ชื่อ shimmer + นาฬิกาสด + สรุปบรรทัดเดียว ── */}
-      <Reveal>
-        <header className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-shimmer text-xl font-bold sm:text-2xl">Dashboard</h1>
-              <LiveClock />
-            </div>
-            <p className="mt-1 text-xs text-slate-500">
-              ภาพรวมโปรเจกต์และไทม์ไลน์ · รวม{' '}
-              <span className="font-mono font-semibold text-slate-700">{activeWorkingDays}</span> วันทำการ ·{' '}
-              <span className="font-mono font-semibold text-slate-700">{all.length}</span> โปรเจกต์ทั้งหมด
-              {data.usingFixtures && <span className="ml-2 rounded bg-amber-50 px-2 py-0.5 text-amber-600 ring-1 ring-amber-100">โหมดตัวอย่าง</span>}
-            </p>
-          </div>
-          <NewProjectDialog teams={admin.teams} departmentOptions={config.departments} />
-        </header>
+      <PageHero
+        title="Dashboard"
+        badge="📡"
+        clock
+        subtitle={
+          <>
+            ภาพรวมโปรเจกต์และไทม์ไลน์ · รวม{' '}
+            <span className="font-mono font-semibold text-slate-700">{activeWorkingDays}</span> วันทำการ ·{' '}
+            <span className="font-mono font-semibold text-slate-700">{all.length}</span> โปรเจกต์ทั้งหมด
+            {data.usingFixtures && <span className="ml-2 rounded bg-amber-50 px-2 py-0.5 text-amber-600 ring-1 ring-amber-100">โหมดตัวอย่าง</span>}
+          </>
+        }
+      >
+        <NewProjectDialog teams={admin.teams} departmentOptions={config.departments} />
+      </PageHero>
+
+      {/* ── แถบสถิติวิ่งแบบจอ LED (OOH billboard) ── */}
+      <Reveal delay={0.04} y={10}>
+        <Ticker
+          items={[
+            { label: 'กำลังทำ', value: `${active.length} โปรเจกต์` },
+            { label: 'ผ่าน Approve', value: `${approved} โปรเจกต์`, tone: 'ok' },
+            { label: 'เกินกำหนด', value: `${overdue} โปรเจกต์`, tone: overdue > 0 ? 'bad' : 'ok' },
+            { label: 'ใกล้ครบกำหนด', value: `${atRisk} โปรเจกต์`, tone: atRisk > 0 ? 'warn' : 'ok' },
+            { label: 'Main', value: `${byKind.main}` },
+            { label: 'Expand', value: `${byKind.expand}` },
+            { label: 'Maintenance', value: `${byKind.maintenance}` },
+            { label: 'Revise', value: `${byKind.revise}` },
+            { label: 'งานทั้งหมด', value: `${totalTasks} งาน` },
+            { label: 'เสร็จแล้ว', value: `${doneTasks} งาน`, tone: 'ok' },
+            { label: 'คงค้าง', value: `${remaining} งาน`, tone: remaining > 0 ? 'warn' : 'ok' },
+            { label: 'ความคืบหน้ารวม', value: `${completion}%` },
+            { label: 'วันทำการรวม', value: `${activeWorkingDays} วัน` },
+          ]}
+        />
       </Reveal>
 
       {/* ── แถวโปรเจกต์ ── */}
