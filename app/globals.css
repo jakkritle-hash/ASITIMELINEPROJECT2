@@ -27,21 +27,52 @@
   --font-mono: var(--font-mono);
 }
 
-/* ---- พื้นหลังบรรยากาศ: ตาราง OOH + แสงเรืองด้านบน (PatternCraft) ---- */
+/* ---- พื้นหลังบรรยากาศ: ตาราง OOH + aurora mesh (PatternCraft layering) ---- */
 body {
   background-color: var(--background);
   background-image:
-    /* แสง indigo เรืองจากด้านบนกลาง ให้มิติ */
-    radial-gradient(120% 110% at 50% -10%, rgba(79, 70, 229, 0.12) 0%, rgba(79, 70, 229, 0) 42%),
     /* เส้นตารางแนวตั้ง/แนวนอน สีสเลทจางๆ */
     linear-gradient(to right, rgba(15, 23, 42, 0.045) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(15, 23, 42, 0.045) 1px, transparent 1px);
-  background-size: 100% 100%, 30px 30px, 30px 30px;
+  background-size: 30px 30px, 30px 30px;
   background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-sans), "IBM Plex Sans Thai", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  position: relative;
+}
+
+/* aurora mesh — สามดวงไฟไล่เฉดลอยช้าๆ อยู่หลังทุกอย่าง (GPU: transform เท่านั้น) */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -20%;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(38% 42% at 22% 12%, rgba(79, 70, 229, 0.16) 0%, transparent 70%),
+    radial-gradient(34% 38% at 82% 6%, rgba(14, 165, 233, 0.13) 0%, transparent 70%),
+    radial-gradient(30% 36% at 60% 92%, rgba(168, 85, 247, 0.09) 0%, transparent 70%),
+    radial-gradient(120% 110% at 50% -10%, rgba(79, 70, 229, 0.10) 0%, transparent 44%);
+  animation: aurora-drift 26s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes aurora-drift {
+  0% { transform: translate3d(-2%, -1%, 0) scale(1); }
+  50% { transform: translate3d(2%, 2%, 0) scale(1.06); }
+  100% { transform: translate3d(-1%, 3%, 0) scale(1.02); }
+}
+
+/* film grain — SVG turbulence จางๆ กัน gradient ดูแบน */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.028;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /* ตัวเลขทุกที่ในคลาส font-mono จัดชิดแบบตาราง (instrument feel) */
@@ -157,10 +188,175 @@ h1, h2, h3 {
 .animation-delay-4s { animation-delay: -4s; }
 .animation-delay-8s { animation-delay: -8s; }
 
+/* ============================================================
+   Design-gallery layer — glass / gradient ring / shimmer / stripes
+   (patterncraft + uiverse + kigen tokens + motion principles)
+   ============================================================ */
+
+/* กระจกฝ้าลอยเหนือ aurora — ใช้กับการ์ด KPI */
+.glass {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.72));
+  backdrop-filter: blur(14px) saturate(1.5);
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 1px 2px rgba(15, 23, 42, 0.05),
+    0 12px 32px -14px rgba(15, 23, 42, 0.18);
+}
+
+/* ขอบ conic gradient หมุนช้าๆ (double-background trick) — ใส่กับการ์ดเด่น */
+@property --ring-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+.gradient-ring {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    conic-gradient(from var(--ring-angle),
+      rgba(79, 70, 229, 0.45), rgba(14, 165, 233, 0.35),
+      rgba(168, 85, 247, 0.3), rgba(79, 70, 229, 0.45)) border-box;
+  animation: ring-spin 6s linear infinite;
+}
+@keyframes ring-spin {
+  to { --ring-angle: 360deg; }
+}
+
+/* ตัวอักษรไล่เฉดวิ่ง — ใช้กับหัวเรื่อง hero */
+.text-shimmer {
+  background: linear-gradient(100deg, #0f172a 20%, #4f46e5 42%, #0ea5e9 52%, #0f172a 72%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer-slide 7s ease-in-out infinite;
+}
+@keyframes shimmer-slide {
+  0%, 100% { background-position: 100% 0; }
+  50% { background-position: 0 0; }
+}
+
+/* progress bar: แถบทแยงเลื่อน + ปลายเรือง */
+.bar-stripes {
+  background-image:
+    linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.35) 50%, rgba(255,255,255,0) 100%),
+    repeating-linear-gradient(-45deg, rgba(255,255,255,0.22) 0 6px, transparent 6px 12px);
+  background-size: 40% 100%, 24px 24px;
+  background-repeat: no-repeat, repeat;
+  animation: stripes-flow 2.2s linear infinite, glow-sweep 2.6s ease-in-out infinite;
+}
+@keyframes stripes-flow {
+  to { background-position: 0 0, 24px 0; }
+}
+@keyframes glow-sweep {
+  0%, 100% { background-position: -40% 0, 0 0; }
+  50% { background-position: 140% 0, 12px 0; }
+}
+
+/* วงแหวนเตือนหายใจ — ครอบการ์ดที่มีค่า alert */
+.pulse-alert {
+  position: relative;
+}
+.pulse-alert::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  border: 1.5px solid rgba(244, 63, 94, 0.5);
+  animation: alert-breathe 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes alert-breathe {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.012); }
+}
+
+/* จุดสถานะสด (ping สองชั้น) */
+.live-dot {
+  position: relative;
+  display: inline-flex;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: #10b981;
+}
+.live-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: inherit;
+  animation: dot-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes dot-ping {
+  0% { transform: scale(1); opacity: 0.7; }
+  80%, 100% { transform: scale(2.6); opacity: 0; }
+}
+
+/* แสงกวาดเฉียงผ่านการ์ดตอน hover (card sheen) */
+.card-sheen {
+  position: relative;
+  overflow: hidden;
+}
+.card-sheen::after {
+  content: "";
+  position: absolute;
+  top: -40%;
+  left: -60%;
+  height: 180%;
+  width: 40%;
+  transform: translateX(-120%) rotate(18deg);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+.card-sheen:hover::after {
+  transform: translateX(520%) rotate(18deg);
+}
+
+/* ไอคอน KPI: รัศมีเรืองหมุนหลังไอคอน */
+.icon-halo {
+  position: relative;
+}
+.icon-halo::before {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: inherit;
+  background: conic-gradient(from 0deg, transparent 60%, rgba(255, 255, 255, 0.65) 78%, transparent 96%);
+  animation: halo-spin 3.6s linear infinite;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.group:hover .icon-halo::before,
+.card-sheen:hover .icon-halo::before {
+  opacity: 1;
+}
+@keyframes halo-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ป้ายส่วนหัวแบบ segment (tick ไล่เฉด + เส้นจาง) */
+.section-tick {
+  background: linear-gradient(180deg, var(--accent), var(--accent-2));
+  box-shadow: 0 0 10px rgba(79, 70, 229, 0.45);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-rise { animation: none; }
   .surface, .surface-hover:hover { transition: none; transform: none; }
   .btn-shine::after { display: none; }
   .btn-press, .btn-press:active { transition: none; transform: none; }
   .animate-blob { animation: none; }
+  body::before { animation: none; }
+  .gradient-ring { animation: none; }
+  .text-shimmer { animation: none; }
+  .bar-stripes { animation: none; }
+  .pulse-alert::before { animation: none; opacity: 0.4; }
+  .live-dot::after { animation: none; }
+  .card-sheen::after { display: none; }
+  .icon-halo::before { animation: none; }
 }
