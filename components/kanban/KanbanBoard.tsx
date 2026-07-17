@@ -93,11 +93,11 @@ export function KanbanBoard({
           key={col}
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => handleDrop(e.dataTransfer.getData('text/plain'), col)}
-          className="flex min-h-[60vh] min-w-[180px] flex-1 flex-col rounded-2xl bg-slate-100/80 p-2 ring-1 ring-slate-200/60"
+          className="flex min-h-[60vh] min-w-[180px] flex-1 flex-col rounded-2xl bg-white/45 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_8px_24px_-16px_rgba(15,23,42,0.18)] ring-1 ring-white/60 backdrop-blur-md"
         >
           <div className="mb-2 flex items-center justify-between px-1 text-xs font-semibold text-gray-600">
             <span className="flex items-center gap-1.5">
-              <span className="h-3 w-0.5 rounded-full bg-gradient-to-b from-indigo-400 to-blue-500" />
+              <span className="section-tick h-3 w-0.5 rounded-full" />
               {col}
             </span>
             <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1.5 font-mono text-[10px] text-gray-500 ring-1 ring-slate-200">

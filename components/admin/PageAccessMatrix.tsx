@@ -43,7 +43,7 @@ export function PageAccessMatrix({ users: initial, canEdit = true }: { users: Us
   }
 
   return (
-    <div className="overflow-x-auto rounded-2xl bg-white shadow-sm ring-1 ring-gray-100">
+    <div className="glass overflow-x-auto rounded-2xl">
       {err && <p className="border-b border-red-100 bg-red-50 px-3 py-2 text-xs text-red-600">{err}</p>}
       <table className="w-full min-w-[680px] text-sm">
         <thead>

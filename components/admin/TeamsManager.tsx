@@ -110,7 +110,7 @@ export function TeamsManager({
         const visibleMemberIds = t.memberIds.filter(isActive)
         const editing = editId === t.id
         return (
-          <div key={t.id} className="group rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-100 transition duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-500/5 hover:ring-indigo-100">
+          <div key={t.id} className="group glass card-sheen rounded-2xl p-4 transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10">
             <div className="mb-3 flex items-center justify-between gap-2">
               {editing ? (
                 <div className="flex flex-1 items-center gap-1.5">

@@ -33,10 +33,10 @@ export function MembersTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-2xl bg-white shadow-sm ring-1 ring-gray-100">
+    <div className="glass overflow-x-auto rounded-2xl">
       <table className="w-full min-w-[600px] text-sm">
         <thead>
-          <tr className="border-b border-gray-100 bg-gray-50/60 text-left text-[11px] uppercase tracking-wide text-gray-400">
+          <tr className="border-b border-indigo-100/60 bg-gradient-to-r from-indigo-50/70 via-blue-50/40 to-transparent text-left text-[11px] uppercase tracking-wide text-slate-500">
             <th className="px-4 py-2.5 font-semibold">ผู้ใช้</th>
             <th className="px-4 py-2.5 font-semibold">อีเมล</th>
             <th className="px-4 py-2.5 font-semibold">บทบาท</th>

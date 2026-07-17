@@ -19,7 +19,7 @@ export function TaskCard({
       draggable
       onDragStart={onDragStart}
       onClick={onClick}
-      className="cursor-pointer rounded-xl bg-white p-2.5 shadow-sm ring-1 ring-gray-100 transition duration-200 hover:-translate-y-0.5 hover:shadow-md hover:shadow-indigo-500/10 hover:ring-indigo-200 active:scale-[0.98] active:cursor-grabbing"
+      className="card-sheen cursor-pointer rounded-xl bg-white/95 p-2.5 shadow-sm ring-1 ring-gray-100 transition duration-200 hover:-translate-y-1 hover:rotate-[0.4deg] hover:shadow-lg hover:shadow-indigo-500/15 hover:ring-indigo-200 active:scale-[0.97] active:cursor-grabbing"
     >
       <div className={'mb-2 text-sm font-medium ' + (isDone ? 'text-gray-400 line-through' : 'text-gray-800')}>
         {task.title}

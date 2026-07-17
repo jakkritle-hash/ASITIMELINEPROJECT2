@@ -6,11 +6,11 @@ import type { ProjectKind } from '@/lib/domain/types'
 import { Avatar } from '@/components/ui/Avatar'
 import { STATUS_META } from '@/components/ui/StatusBadge'
 
-/** เหรียญตามอันดับ — แชมป์ 3 อันดับแรกได้ 🏆🥈🥉 ที่เหลือเป็นเลขอันดับ */
-const MEDALS: Record<number, { icon: string; label: string; ring: string; badge: string; bar: string }> = {
-  1: { icon: '🏆', label: 'Champion', ring: 'ring-2 ring-amber-400', badge: 'bg-gradient-to-br from-amber-400 to-yellow-500 text-white', bar: 'from-amber-400 via-yellow-400 to-amber-500' },
-  2: { icon: '🥈', label: 'Runner-up', ring: 'ring-1 ring-slate-300', badge: 'bg-gradient-to-br from-slate-300 to-slate-400 text-white', bar: 'from-slate-300 via-slate-200 to-slate-400' },
-  3: { icon: '🥉', label: '3rd', ring: 'ring-1 ring-orange-300', badge: 'bg-gradient-to-br from-orange-300 to-amber-600 text-white', bar: 'from-orange-300 via-amber-400 to-orange-500' },
+/** เหรียญตามอันดับ — 3 อันดับแรกได้แท่นแชมป์ขอบไล่เฉดหมุน (podium-*) ที่เหลือเป็นเลขอันดับ */
+const MEDALS: Record<number, { icon: string; label: string; podium: string; badge: string; bar: string }> = {
+  1: { icon: '🏆', label: 'Champion', podium: 'podium-gold', badge: 'bg-gradient-to-br from-amber-400 to-yellow-500 text-white', bar: 'from-amber-400 via-yellow-400 to-amber-500' },
+  2: { icon: '🥈', label: 'Runner-up', podium: 'podium-silver', badge: 'bg-gradient-to-br from-slate-300 to-slate-400 text-white', bar: 'from-slate-300 via-slate-200 to-slate-400' },
+  3: { icon: '🥉', label: '3rd', podium: 'podium-bronze', badge: 'bg-gradient-to-br from-orange-300 to-amber-600 text-white', bar: 'from-orange-300 via-amber-400 to-orange-500' },
 }
 
 const TABS: { key: ProjectKind; label: string; note: string; accent: string }[] = [
@@ -99,7 +99,7 @@ export function PerformanceBoard({
             return (
               <div
                 key={s.user.id}
-                className={`relative overflow-hidden rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100 transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10 ${medal?.ring ?? ''}`}
+                className={`card-sheen relative overflow-hidden rounded-2xl p-5 transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10 ${medal ? medal.podium : 'glass'}`}
               >
                 {medal && <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${medal.bar}`} />}
 
@@ -135,8 +135,8 @@ export function PerformanceBoard({
                     <span>ส่งงานสำเร็จ <span className="font-mono">{s.taskDone}/{s.taskTotal}</span></span>
                     <span className="font-mono font-medium text-gray-700">{s.completion}%</span>
                   </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-gray-200">
-                    <div className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-green-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] transition-[width] duration-700" style={{ width: `${s.completion}%` }} />
+                  <div className="h-2 overflow-hidden rounded-full bg-slate-900/10">
+                    <div className="bar-stripes h-full rounded-full bg-gradient-to-r from-emerald-400 to-green-500 transition-[width] duration-700" style={{ width: `${s.completion}%` }} />
                   </div>
                 </div>
 

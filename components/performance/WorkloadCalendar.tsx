@@ -59,7 +59,7 @@ export function WorkloadCalendar({ data }: { data: HeatmapData }) {
   return (
     <div>
       {/* แถบควบคุมยุบ/ขยาย — แยกตามปี, กดชื่อเดือนเพื่อสลับ */}
-      <div className="mb-5 space-y-2 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-gray-100">
+      <div className="glass mb-5 space-y-2 rounded-2xl p-3">
         <div className="flex flex-wrap items-center gap-2 text-[11px]">
           <span className="font-medium text-gray-500">แสดงเดือน:</span>
           <button onClick={() => setMany(months.map((m) => m.key), false)} className="rounded-md bg-indigo-50 px-2 py-0.5 font-medium text-indigo-600 ring-1 ring-indigo-100 hover:bg-indigo-100">แสดงทั้งหมด</button>
@@ -108,7 +108,7 @@ export function WorkloadCalendar({ data }: { data: HeatmapData }) {
       {/* Card รายคน */}
       <div className="space-y-4">
         {data.users.map((uh) => (
-          <div key={uh.user.id} className="animate-rise rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-100">
+          <div key={uh.user.id} className="animate-rise glass card-sheen rounded-2xl p-4 transition duration-300 hover:shadow-xl hover:shadow-indigo-500/10">
             <div className="mb-3 flex items-center gap-2.5 border-b border-gray-50 pb-3">
               <Avatar user={uh.user} size={32} />
               <div className="min-w-0">
@@ -177,7 +177,7 @@ function MonthBlock({
                   key={date}
                   title={tooltip(date, c, uh.titles[date])}
                   className={
-                    `flex h-7 w-7 items-center justify-center rounded-md text-[10px] tabular-nums ${LEVEL_BG[lvl]} ` +
+                    `day-cell flex h-7 w-7 items-center justify-center rounded-md text-[10px] tabular-nums ${LEVEL_BG[lvl]} ` +
                     (lvl >= 3 ? 'text-white ' : 'text-gray-600 ') +
                     (isToday ? 'ring-2 ring-rose-400' : '')
                   }
