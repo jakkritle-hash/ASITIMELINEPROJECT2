@@ -23,11 +23,15 @@ export function Reveal({
   className?: string
 }) {
   const reduced = useReducedMotion()
+  // หมายเหตุสำคัญ: ห้าม animate `filter` ที่นี่ — motion จะทิ้ง `filter: blur(0px)` ค้างไว้บน
+  // element ซึ่งสร้าง stacking context ใหม่ + ทำให้ position:fixed ยึดกล่องนี้แทน viewport
+  // ผลคือ modal (เช่น New Task) จมอยู่หลัง Kanban กดปุ่มไม่ได้ ใช้แค่ opacity + y ก็พอ
+  // (พอนิ่งที่ y:0 scale:1 motion จะ set transform:none เอง จึงไม่เหลือ stacking context)
   return (
     <motion.div
       className={className}
-      initial={reduced ? false : { opacity: 0, y, scale: 0.985, filter: 'blur(4px)' }}
-      animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+      initial={reduced ? false : { opacity: 0, y, scale: 0.985 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ type: 'spring', stiffness: 260, damping: 26, mass: 0.9, delay }}
     >
       {children}
