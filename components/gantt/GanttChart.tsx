@@ -14,7 +14,7 @@ import { reorderProjectsAction } from '@/app/actions/projects'
 import { reorderTasksAction } from '@/app/actions/tasks'
 import { ZoomControl } from './ZoomControl'
 
-const LABEL_W = 360
+const LABEL_W = 420
 const PX_PER_DAY: Record<ZoomLevel, number> = { year: 2.2, quarter: 4, month: 9, week: 22, day: 44 }
 
 /** ป้ายประเภทโปรเจกต์ — แสดงทุกแถวเสมอ (รวม Main) ให้แยกประเภทออกทันที */
@@ -52,7 +52,8 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
       // ค้นหา: ชื่อโปรเจกต์ หรือชื่องานภายใน
       (!q || p.name.toLowerCase().includes(q) || p.tasks.some((t) => t.title.toLowerCase().includes(q))),
   )
-  const [expanded, setExpanded] = useState<Set<string>>(new Set(visible[0] ? [visible[0].id] : []))
+  // เริ่มต้นยุบทุกโปรเจกต์ — ให้ผู้ใช้กดกางเอง (ไม่เปิดแถวแรกให้อัตโนมัติ)
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
   function reorderTo(targetId: string) {
     if (!dragId || dragId === targetId) return setDragId(null)
@@ -277,7 +278,7 @@ export function GanttChart({ projects }: { projects: EnrichedProject[] }) {
                     >
                       {isOpen ? '−' : '+'}
                     </button>
-                    <Link href={`/projects/${p.id}`} className="min-w-0 flex-1 truncate text-sm font-semibold text-gray-800 hover:text-blue-600 hover:underline" title={p.name}>
+                    <Link href={`/projects/${p.id}`} className="min-w-0 flex-1 text-sm font-semibold leading-snug text-gray-800 [overflow-wrap:anywhere] hover:text-blue-600 hover:underline" title={p.name}>
                       {p.name}
                     </Link>
                     <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${KIND_TAG[p.kind].cls}`} title={KIND_TAG[p.kind].hint}>
